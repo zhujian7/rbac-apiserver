@@ -19,18 +19,20 @@ This project implements a standalone API server that extends the Kubernetes API 
 ## Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                   Kubernetes Cluster                     │
-│  ┌────────────────┐         ┌──────────────────────┐   │
-│  │  kube-apiserver│────────▶│  rbac-apiserver      │   │
-│  │                │         │  (aggregated)        │   │
-│  │  APIService    │         │                      │   │
-│  │  registration  │         │  Widget API          │   │
-│  └────────────────┘         │  /apis/rbac.         │   │
-│                              │  stolostron.io/      │   │
-│                              │  v1alpha1            │   │
-│                              └──────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                         Kubernetes Cluster                        │
+│                                                                   │
+│   ┌──────────────────┐                  ┌─────────────────────┐   │
+│   │  kube-apiserver  │─────────────────▶│  rbac-apiserver     │   │
+│   │                  │                  │  (aggregated)       │   │
+│   │  APIService:     │                  │                     │   │
+│   │  v1alpha1.rbac.  │                  │  Widget API         │   │
+│   │  stolostron.io   │                  │  /apis/rbac.        │   │
+│   │                  │                  │   stolostron.io/    │   │
+│   └──────────────────┘                  │   v1alpha1/widgets  │   │
+│                                         └─────────────────────┘   │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ## Prerequisites
