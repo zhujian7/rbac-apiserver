@@ -21,7 +21,8 @@ GOHOSTOS ?=$(shell $(GOCMD) env GOHOSTOS)
 GOHOSTARCH ?=$(shell $(GOCMD) env GOHOSTARCH)
 
 # Docker related variables
-DOCKER := podman
+# Auto-detect container runtime: prefer podman locally, but use docker if available (e.g., in CI)
+DOCKER := $(shell command -v docker 2>/dev/null || echo podman)
 DOCKER_BUILD_ARGS := --platform linux/amd64
 
 # Kubernetes related variables
