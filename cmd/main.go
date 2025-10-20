@@ -16,6 +16,8 @@ import (
 	"k8s.io/klog/v2"
 
 	generatedopenapi "github.com/stolostron/rbac-apiserver/apis/generated/openapi"
+	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
+	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 	widgetapi "github.com/stolostron/rbac-apiserver/apis/widget"
 	widgetv1alpha1 "github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1"
 	"github.com/stolostron/rbac-apiserver/pkg/registry"
@@ -27,6 +29,7 @@ var (
 )
 
 func init() {
+	// Register Widget API (rbac.stolostron.io/v1alpha1)
 	gv := schema.GroupVersion{Group: widgetapi.GroupName, Version: widgetv1alpha1.APIVersion}
 	Scheme.AddKnownTypes(gv, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
 	metav1.AddToGroupVersion(Scheme, gv)
@@ -35,21 +38,45 @@ func init() {
 	internalGV := schema.GroupVersion{Group: widgetapi.GroupName, Version: runtime.APIVersionInternal}
 	Scheme.AddKnownTypes(internalGV, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
 
+	// Register Relationship API (rbac.open-cluster-management.io/v1alpha1)
+	rbacGV := schema.GroupVersion{Group: rbacapi.GroupName, Version: rbacv1alpha1.APIVersion}
+	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
+	metav1.AddToGroupVersion(Scheme, rbacGV)
+
+	// Register internal version types for PATCH operations
+	rbacInternalGV := schema.GroupVersion{Group: rbacapi.GroupName, Version: runtime.APIVersionInternal}
+	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
+
 	// Register meta types
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
 }
 
 func installAPI(s *genericapiserver.GenericAPIServer) error {
+	// Install Widget API (rbac.stolostron.io/v1alpha1)
 	widgetREST := registry.NewWidgetREST()
 
-	restStorage := map[string]rest.Storage{
+	widgetStorage := map[string]rest.Storage{
 		"widgets": widgetREST,
 	}
 
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(widgetapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
-	apiGroupInfo.VersionedResourcesStorageMap[widgetv1alpha1.APIVersion] = restStorage
+	widgetAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(widgetapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
+	widgetAPIGroupInfo.VersionedResourcesStorageMap[widgetv1alpha1.APIVersion] = widgetStorage
 
-	return s.InstallAPIGroup(&apiGroupInfo)
+	if err := s.InstallAPIGroup(&widgetAPIGroupInfo); err != nil {
+		return err
+	}
+
+	// Install Relationship API (rbac.open-cluster-management.io/v1alpha1)
+	relationshipREST := registry.NewRelationshipREST()
+
+	rbacStorage := map[string]rest.Storage{
+		"relationships": relationshipREST,
+	}
+
+	rbacAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(rbacapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
+	rbacAPIGroupInfo.VersionedResourcesStorageMap[rbacv1alpha1.APIVersion] = rbacStorage
+
+	return s.InstallAPIGroup(&rbacAPIGroupInfo)
 }
 
 type Config struct {

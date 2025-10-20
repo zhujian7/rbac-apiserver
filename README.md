@@ -219,7 +219,7 @@ See [charts/rbac-apiserver/README.md](charts/rbac-apiserver/README.md) for compl
 
 ## API Reference
 
-### Widget Resource
+### Widget Resource (Example API)
 
 ```yaml
 apiVersion: rbac.stolostron.io/v1alpha1
@@ -230,6 +230,27 @@ metadata:
 spec:
   size: 10  # Widget size (integer)
 ```
+
+### Relationship Resource (Multi-cluster RBAC)
+
+```yaml
+apiVersion: rbac.open-cluster-management.io/v1alpha1
+kind: Relationship
+metadata:
+  name: user2-cluster1-admin
+spec:
+  tuples:
+  - resource:
+      objectType: "resource"
+      objectId: "cluster/cluster1/namespace/_wildcard_"
+    relation: "admin"
+    subject:
+      object:
+        objectType: "user"
+        objectId: "user2"
+```
+
+For detailed information about the Relationship API, see [docs/relationship-api.md](docs/relationship-api.md).
 
 ### Supported Operations
 
