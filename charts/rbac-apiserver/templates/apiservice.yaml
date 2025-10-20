@@ -28,7 +28,7 @@ spec:
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha1.rbac.open-cluster-management.io
+  name: v1alpha1.multicluster-rbac.open-cluster-management.io
   labels:
     {{- include "rbac-apiserver.labels" . | nindent 4 }}
   {{- if .Values.tls.certManager.enabled }}
@@ -36,7 +36,7 @@ metadata:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rbac-apiserver.fullname" . }}-serving-cert
   {{- end }}
 spec:
-  group: rbac.open-cluster-management.io
+  group: multicluster-rbac.open-cluster-management.io
   groupPriorityMinimum: 1000
   versionPriority: 15
   service:

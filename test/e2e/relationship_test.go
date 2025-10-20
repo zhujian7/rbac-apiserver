@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	relationshipAPIGroup   = "rbac.open-cluster-management.io"
+	relationshipAPIGroup   = "multicluster-rbac.open-cluster-management.io"
 	relationshipAPIVersion = "v1alpha1"
 )
 

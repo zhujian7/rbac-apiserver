@@ -234,7 +234,7 @@ spec:
 ### Relationship Resource (Multi-cluster RBAC)
 
 ```yaml
-apiVersion: rbac.open-cluster-management.io/v1alpha1
+apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: user2-cluster1-admin
