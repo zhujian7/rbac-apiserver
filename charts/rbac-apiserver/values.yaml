@@ -1,0 +1,66 @@
+# Default values for rbac-apiserver
+replicaCount: 1
+
+image:
+  repository: quay.io/stolostron/rbac-apiserver
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 443
+  targetPort: 6443
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# API Server specific settings
+apiserver:
+  # Verbosity level for logging
+  verbosity: 2
+  # Enable authentication
+  authentication: true
+  # Enable authorization
+  authorization: true
+
+# TLS certificate configuration
+tls:
+  # Use cert-manager to generate certificates (useful for development/e2e)
+  certManager:
+    enabled: false
+  # If cert-manager is disabled, specify the secret name containing tls.crt and tls.key
+  # You can create this secret manually in production environments
+  secretName: ""

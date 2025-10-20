@@ -1,0 +1,25 @@
+{{- if .Values.tls.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "rbac-apiserver.fullname" . }}-selfsigned-issuer
+  labels:
+    {{- include "rbac-apiserver.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "rbac-apiserver.fullname" . }}-serving-cert
+  labels:
+    {{- include "rbac-apiserver.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "rbac-apiserver.fullname" . }}-serving-cert
+  dnsNames:
+  - {{ include "rbac-apiserver.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "rbac-apiserver.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "rbac-apiserver.fullname" . }}-selfsigned-issuer
+{{- end }}

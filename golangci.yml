@@ -1,0 +1,116 @@
+# Copyright Contributors to the Open Cluster Management project
+version: "2"
+run:
+  concurrency: 10
+linters:
+  default: none
+  enable:
+    - errcheck
+    - goconst
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - unconvert
+    - unused
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+  gocritic:
+    enabled-checks:
+      - appendAssign
+      - assignOp
+      - badCond
+      - boolExprSimplify
+      - captLocal
+      - caseOrder
+      - codegenComment
+      - commentFormatting
+      - commentedOutCode
+      - defaultCaseOrder
+      - deprecatedComment
+      - docStub
+      - dupArg
+      - dupBranchBody
+      - dupCase
+      - dupSubExpr
+      - elseif
+      - emptyFallthrough
+      - emptyStringTest
+      - equalFold
+      - flagDeref
+      - flagName
+      - hexLiteral
+      - hugeParam
+      - ifElseChain
+      - importShadow
+      - indexAlloc
+      - initClause
+      - methodExprCall
+      - nestingReduce
+      - newDeref
+      - nilValReturn
+      - octalLiteral
+      - offBy1
+      - paramTypeCombine
+      - ptrToRefParam
+      - rangeExprCopy
+      - rangeValCopy
+      - regexpMust
+      - singleCaseSwitch
+      - sloppyLen
+      - stringXbytes
+      - switchTrue
+      - typeAssertChain
+      - typeSwitchVar
+      - typeUnparen
+      - underef
+      - unlambda
+      - unnecessaryBlock
+      - unslice
+      - valSwap
+      - wrapperFunc
+      - yodaStyleExpr
+  lll:
+    line-length: 160
+    tab-width: 1
+  misspell:
+    locale: US
+issues:
+  exclude-rules:
+    - linters:
+        - errcheck
+        - goconst
+        - gosec
+        - lll
+        - misspell
+        - staticcheck
+        - unconvert
+        - unused
+        - govet
+        - ineffassign
+        - gocritic
+      path: _test\.go$|^tests/|^samples/
+    - path: (.+)\.go$
+      text: composite literal uses unkeyed fields
+    - linters:
+        - misspell
+      text: "Creater.*is a misspelling of.*Creature"
+    - linters:
+        - staticcheck
+      text: "QF1008: could remove embedded field.*from selector"
+  exclude-dirs:
+    - vendor
+    - third_party
+    - genfiles
+    - bindata
+    - builtin
+    - examples
+  exclude-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.gen\\.go$"
+    - ".*_test\\.go$"
+  max-issues-per-linter: 0
+  max-same-issues: 0

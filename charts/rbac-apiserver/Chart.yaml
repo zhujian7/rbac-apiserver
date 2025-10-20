@@ -1,0 +1,6 @@
+apiVersion: v2
+name: rbac-apiserver
+description: A Helm chart for RBAC API Server
+type: application
+version: 0.1.0
+appVersion: "latest"
