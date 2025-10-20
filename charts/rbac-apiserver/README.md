@@ -66,12 +66,13 @@ The following table lists the configurable parameters and their default values:
 After installation, verify the API server is running:
 
 ```bash
-# Check if the APIService is available
-kubectl get apiservices v1alpha1.widget.stolostron.io
+# Check if the APIServices are available
+kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io
+kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io
 
 # Create a test widget
 kubectl apply -f - <<EOF
-apiVersion: widget.stolostron.io/v1alpha1
+apiVersion: test-rbac.open-cluster-management.io/v1alpha1
 kind: Widget
 metadata:
   name: test-widget
@@ -82,6 +83,27 @@ EOF
 
 # List widgets
 kubectl get widgets -n default
+
+# Create a test relationship
+kubectl apply -f - <<EOF
+apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+kind: Relationship
+metadata:
+  name: test-relationship
+spec:
+  tuples:
+  - resource:
+      objectType: "resource"
+      objectId: "cluster/cluster1/namespace/default"
+    relation: "admin"
+    subject:
+      object:
+        objectType: "user"
+        objectId: "user1"
+EOF
+
+# List relationships
+kubectl get relationships
 ```
 
 ## Uninstallation

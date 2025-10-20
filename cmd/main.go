@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	// Register Sample API group (rbac.stolostron.io/v1alpha1)
+	// Register Sample API group (test-rbac.open-cluster-management.io/v1alpha1)
 	gv := schema.GroupVersion{Group: sampleapi.GroupName, Version: samplev1alpha1.APIVersion}
 	Scheme.AddKnownTypes(gv, &samplev1alpha1.Widget{}, &samplev1alpha1.WidgetList{})
 	metav1.AddToGroupVersion(Scheme, gv)
@@ -52,7 +52,7 @@ func init() {
 }
 
 func installAPI(s *genericapiserver.GenericAPIServer) error {
-	// Install Sample API group (rbac.stolostron.io/v1alpha1)
+	// Install Sample API group (test-rbac.open-cluster-management.io/v1alpha1)
 	widgetREST := registry.NewWidgetREST()
 
 	sampleStorage := map[string]rest.Storage{

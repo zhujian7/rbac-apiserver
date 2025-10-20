@@ -8,7 +8,8 @@ This project implements a standalone API server that extends the Kubernetes API 
 
 ## Features
 
-- **Custom Widget API** (`rbac.stolostron.io/v1alpha1`) with full CRUD operations
+- **Sample Widget API** (`test-rbac.open-cluster-management.io/v1alpha1`) - Example API with full CRUD operations
+- **Relationship API** (`multicluster-rbac.open-cluster-management.io/v1alpha1`) - Multi-cluster RBAC relationships based on SpiceDB tuple model
 - **In-memory storage** backend for development and testing
 - **OpenAPI schema generation** for automatic API documentation
 - **Helm chart deployment** with flexible TLS configuration
@@ -19,20 +20,22 @@ This project implements a standalone API server that extends the Kubernetes API 
 ## Architecture
 
 ```text
-┌───────────────────────────────────────────────────────────────────┐
-│                         Kubernetes Cluster                        │
-│                                                                   │
-│   ┌──────────────────┐                  ┌─────────────────────┐   │
-│   │  kube-apiserver  │─────────────────▶│  rbac-apiserver     │   │
-│   │                  │                  │  (aggregated)       │   │
-│   │  APIService:     │                  │                     │   │
-│   │  v1alpha1.rbac.  │                  │  Widget API         │   │
-│   │  stolostron.io   │                  │  /apis/rbac.        │   │
-│   │                  │                  │   stolostron.io/    │   │
-│   └──────────────────┘                  │   v1alpha1/widgets  │   │
-│                                         └─────────────────────┘   │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                         Kubernetes Cluster                                     │
+│                                                                                │
+│   ┌──────────────────┐                  ┌──────────────────────────────────┐   │
+│   │  kube-apiserver  │─────────────────▶│  rbac-apiserver (aggregated)     │   │
+│   │                  │                  │                                  │   │
+│   │  APIServices:    │                  │  Sample Widget API:              │   │
+│   │  - v1alpha1.     │                  │    test-rbac.open-cluster-       │   │
+│   │    test-rbac...  │                  │    management.io/v1alpha1        │   │
+│   │  - v1alpha1.     │                  │                                  │   │
+│   │    multicluster  │                  │  Relationship API:               │   │
+│   │    -rbac...      │                  │    multicluster-rbac.open-       │   │
+│   │                  │                  │    cluster-management.io/v1alpha1│   │
+│   └──────────────────┘                  └──────────────────────────────────┘   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Prerequisites
@@ -92,11 +95,12 @@ helm install rbac-apiserver charts/rbac-apiserver/ \
 
 ```bash
 # Check APIService status
-kubectl get apiservices v1alpha1.rbac.stolostron.io
+kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io
+kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io
 
 # Create a test Widget
 kubectl apply -f - <<EOF
-apiVersion: rbac.stolostron.io/v1alpha1
+apiVersion: test-rbac.open-cluster-management.io/v1alpha1
 kind: Widget
 metadata:
   name: test-widget
@@ -107,6 +111,27 @@ EOF
 
 # List Widgets
 kubectl get widgets -n default
+
+# Create a test Relationship
+kubectl apply -f - <<EOF
+apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+kind: Relationship
+metadata:
+  name: test-relationship
+spec:
+  tuples:
+  - resource:
+      objectType: "resource"
+      objectId: "cluster/cluster1/namespace/default"
+    relation: "admin"
+    subject:
+      object:
+        objectType: "user"
+        objectId: "user1"
+EOF
+
+# List Relationships
+kubectl get relationships
 ```
 
 ## Development
@@ -117,7 +142,9 @@ kubectl get widgets -n default
 .
 ├── apis/                       # API definitions
 │   ├── generated/             # Generated OpenAPI specs
-│   └── widget/                # Widget API types
+│   ├── sample/                # Sample Widget API (test-rbac.open-cluster-management.io)
+│   │   └── v1alpha1/         # v1alpha1 API version
+│   └── rbac/                  # Relationship API (multicluster-rbac.open-cluster-management.io)
 │       └── v1alpha1/         # v1alpha1 API version
 ├── charts/                    # Helm charts
 │   └── rbac-apiserver/       # Main Helm chart
@@ -127,6 +154,7 @@ kubectl get widgets -n default
 │   └── storage/              # Storage backend
 ├── test/                      # Test suites
 │   └── e2e/                  # End-to-end tests
+├── docs/                      # Documentation
 └── hack/                      # Development scripts
 ```
 
@@ -219,10 +247,12 @@ See [charts/rbac-apiserver/README.md](charts/rbac-apiserver/README.md) for compl
 
 ## API Reference
 
-### Widget Resource (Example API)
+### Widget Resource (Example/Test API)
+
+The Widget API is a sample API for demonstration and testing purposes.
 
 ```yaml
-apiVersion: rbac.stolostron.io/v1alpha1
+apiVersion: test-rbac.open-cluster-management.io/v1alpha1
 kind: Widget
 metadata:
   name: example-widget
@@ -304,7 +334,8 @@ Contributions are welcome! Please ensure:
 
 ```bash
 # Check APIService status
-kubectl get apiservices v1alpha1.rbac.stolostron.io -o yaml
+kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io -o yaml
+kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io -o yaml
 
 # Check API server pods
 kubectl get pods -n rbac-apiserver-system
@@ -329,8 +360,8 @@ kubectl get secret -n rbac-apiserver-system rbac-apiserver-serving-cert -o yaml
 # Ensure cluster is accessible
 kubectl cluster-info
 
-# Verify APIService is available
-kubectl get apiservices | grep rbac.stolostron.io
+# Verify APIServices are available
+kubectl get apiservices | grep open-cluster-management.io
 
 # Check e2e test logs with verbose output
 ./_output/test/e2e.test -ginkgo.v -ginkgo.fail-fast

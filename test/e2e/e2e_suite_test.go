@@ -11,11 +11,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	apiGroup   = "rbac.stolostron.io"
-	apiVersion = "v1alpha1"
-)
-
 var (
 	kubeConfig    *rest.Config
 	dynamicClient dynamic.Interface

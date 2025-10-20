@@ -9,11 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-)
 
-const (
-	relationshipAPIGroup   = "multicluster-rbac.open-cluster-management.io"
-	relationshipAPIVersion = "v1alpha1"
+	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
+	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 )
 
 var _ = Describe("Relationship API", func() {
@@ -24,8 +22,8 @@ var _ = Describe("Relationship API", func() {
 
 	BeforeEach(func() {
 		gvr = schema.GroupVersionResource{
-			Group:    relationshipAPIGroup,
-			Version:  relationshipAPIVersion,
+			Group:    rbacapi.GroupName,
+			Version:  rbacv1alpha1.APIVersion,
 			Resource: "relationships",
 		}
 		// Use unique name with timestamp to avoid conflicts
@@ -42,7 +40,7 @@ var _ = Describe("Relationship API", func() {
 		It("should create a Relationship successfully", func() {
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,
@@ -81,7 +79,7 @@ var _ = Describe("Relationship API", func() {
 			// First create a relationship
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,
@@ -119,7 +117,7 @@ var _ = Describe("Relationship API", func() {
 			// First create a relationship
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,
@@ -165,7 +163,7 @@ var _ = Describe("Relationship API", func() {
 			// First create a relationship
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,
@@ -207,7 +205,7 @@ var _ = Describe("Relationship API", func() {
 		It("should create a relationship with multiple tuples", func() {
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,
@@ -259,7 +257,7 @@ var _ = Describe("Relationship API", func() {
 		It("should fail when creating duplicate relationships", func() {
 			relationship := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": relationshipAPIGroup + "/" + relationshipAPIVersion,
+					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
 					"kind":       "Relationship",
 					"metadata": map[string]interface{}{
 						"name": relationshipName,

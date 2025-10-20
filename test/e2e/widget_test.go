@@ -6,6 +6,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	sampleapi "github.com/stolostron/rbac-apiserver/apis/sample"
+	samplev1alpha1 "github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1"
 )
 
 var _ = Describe("Widget API", func() {
@@ -17,8 +20,8 @@ var _ = Describe("Widget API", func() {
 
 	BeforeEach(func() {
 		gvr = schema.GroupVersionResource{
-			Group:    apiGroup,
-			Version:  apiVersion,
+			Group:    sampleapi.GroupName,
+			Version:  samplev1alpha1.APIVersion,
 			Resource: "widgets",
 		}
 		testNamespace = "default"
@@ -34,7 +37,7 @@ var _ = Describe("Widget API", func() {
 		It("should create a Widget successfully", func() {
 			widget := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      widgetName,
@@ -55,7 +58,7 @@ var _ = Describe("Widget API", func() {
 			// First create a widget
 			widget := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      widgetName,
@@ -80,7 +83,7 @@ var _ = Describe("Widget API", func() {
 			// First create a widget
 			widget := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      widgetName,
@@ -105,7 +108,7 @@ var _ = Describe("Widget API", func() {
 			// First create a widget
 			widget := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      widgetName,
@@ -137,7 +140,7 @@ var _ = Describe("Widget API", func() {
 			// First create a widget
 			widget := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      widgetName,
@@ -167,7 +170,7 @@ var _ = Describe("Widget API", func() {
 			// Create widgets in default namespace
 			widget1 := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": apiGroup + "/" + apiVersion,
+					"apiVersion": sampleapi.GroupName + "/" + samplev1alpha1.APIVersion,
 					"kind":       "Widget",
 					"metadata": map[string]interface{}{
 						"name":      "widget-1",
