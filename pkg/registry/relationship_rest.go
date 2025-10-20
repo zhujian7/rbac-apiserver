@@ -13,10 +13,11 @@ import (
 
 	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
+	"github.com/stolostron/rbac-apiserver/pkg/storage"
 )
 
 type RelationshipREST struct {
-	// TODO: Add storage backend when implementing
+	storage *storage.RelationshipMemoryStorage
 }
 
 // Ensure RelationshipREST implements the required interfaces
@@ -29,7 +30,9 @@ var _ rest.Storage = &RelationshipREST{}
 var _ rest.GroupVersionKindProvider = &RelationshipREST{}
 
 func NewRelationshipREST() *RelationshipREST {
-	return &RelationshipREST{}
+	return &RelationshipREST{
+		storage: storage.NewRelationshipMemoryStorage(),
+	}
 }
 
 func (r *RelationshipREST) New() runtime.Object {
@@ -41,19 +44,11 @@ func (r *RelationshipREST) NewList() runtime.Object {
 }
 
 func (r *RelationshipREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// TODO: Implement when storage backend is ready
-	return nil, fmt.Errorf("not implemented")
+	return r.storage.Get(name)
 }
 
 func (r *RelationshipREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: Implement when storage backend is ready
-	return &v1alpha1.RelationshipList{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: rbacapi.GroupName + "/" + v1alpha1.APIVersion,
-			Kind:       "RelationshipList",
-		},
-		Items: []v1alpha1.Relationship{},
-	}, nil
+	return r.storage.List()
 }
 
 func (r *RelationshipREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc,
@@ -63,14 +58,19 @@ func (r *RelationshipREST) Create(ctx context.Context, obj runtime.Object, creat
 		APIVersion: rbacapi.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "Relationship",
 	}
-	// TODO: Implement SpiceDB integration for creating relationships
-	return relationship, nil
+	return r.storage.Create(relationship)
 }
 
 func (r *RelationshipREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// TODO: Implement SpiceDB integration for deleting relationships
-	return nil, true, fmt.Errorf("not implemented")
+	// Get the object before deleting for return value
+	obj, err := r.storage.Get(name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	err = r.storage.Delete(name)
+	return obj, true, err
 }
 
 func (r *RelationshipREST) Watch(ctx context.Context, options *metav1.ListOptions) (watch.Interface, error) {
