@@ -19,6 +19,8 @@ spec:
   dnsNames:
   - {{ include "rbac-apiserver.fullname" . }}.{{ .Release.Namespace }}.svc
   - {{ include "rbac-apiserver.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  privateKey:
+    rotationPolicy: Always
   issuerRef:
     kind: Issuer
     name: {{ include "rbac-apiserver.fullname" . }}-selfsigned-issuer
