@@ -45,7 +45,7 @@ echo "Generating OpenAPI definitions..."
     --output-file="zz_generated.openapi.go" \
     --report-filename="${SCRIPT_ROOT}/violations.report" \
     -v 2 \
-    "${OPENAPI_PKG}/apis/widget/v1alpha1" \
+    "${OPENAPI_PKG}/apis/sample/v1alpha1" \
     "${OPENAPI_PKG}/apis/rbac/v1alpha1" \
     "k8s.io/apimachinery/pkg/apis/meta/v1" \
     "k8s.io/apimachinery/pkg/runtime" \

@@ -13,8 +13,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	widgetapi "github.com/stolostron/rbac-apiserver/apis/widget"
-	"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1"
+	sampleapi "github.com/stolostron/rbac-apiserver/apis/sample"
+	"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1"
 	"github.com/stolostron/rbac-apiserver/pkg/storage"
 )
 
@@ -82,7 +82,7 @@ func (r *WidgetREST) Create(ctx context.Context, obj runtime.Object, createValid
 	options *metav1.CreateOptions) (runtime.Object, error) {
 	widget := obj.(*v1alpha1.Widget)
 	widget.TypeMeta = metav1.TypeMeta{
-		APIVersion: widgetapi.GroupName + "/" + v1alpha1.APIVersion,
+		APIVersion: sampleapi.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "Widget",
 	}
 	return r.storage.Create(widget)
@@ -157,7 +157,7 @@ func (r *WidgetREST) Watch(ctx context.Context, options *metav1.ListOptions) (wa
 
 func (r *WidgetREST) ConvertToTable(ctx context.Context, object runtime.Object,
 	tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: widgetapi.GroupName, Resource: "widgets"}).
+	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: sampleapi.GroupName, Resource: "widgets"}).
 		ConvertToTable(ctx, object, tableOptions)
 }
 

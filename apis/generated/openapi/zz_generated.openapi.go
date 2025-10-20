@@ -21,10 +21,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipSpec": schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipSpec(ref),
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference": schema_rbac_apiserver_apis_rbac_v1alpha1_SubjectReference(ref),
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Tuple":            schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref),
-		"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.Widget":         schema_rbac_apiserver_apis_widget_v1alpha1_Widget(ref),
-		"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetList":     schema_rbac_apiserver_apis_widget_v1alpha1_WidgetList(ref),
-		"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetSpec":     schema_rbac_apiserver_apis_widget_v1alpha1_WidgetSpec(ref),
-		"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetStatus":   schema_rbac_apiserver_apis_widget_v1alpha1_WidgetStatus(ref),
+		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget":         schema_rbac_apiserver_apis_sample_v1alpha1_Widget(ref),
+		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetList":     schema_rbac_apiserver_apis_sample_v1alpha1_WidgetList(ref),
+		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec":     schema_rbac_apiserver_apis_sample_v1alpha1_WidgetSpec(ref),
+		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus":   schema_rbac_apiserver_apis_sample_v1alpha1_WidgetStatus(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                            schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                        schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                         schema_pkg_apis_meta_v1_APIResource(ref),
@@ -301,7 +301,7 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref common.ReferenceCallback
 	}
 }
 
-func schema_rbac_apiserver_apis_widget_v1alpha1_Widget(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_sample_v1alpha1_Widget(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -332,25 +332,25 @@ func schema_rbac_apiserver_apis_widget_v1alpha1_Widget(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec defines the desired state of Widget",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetSpec"),
+							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status defines the observed state of Widget",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetStatus"),
+							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetSpec", "github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.WidgetStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec", "github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -385,7 +385,7 @@ func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetList(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.Widget"),
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget"),
 									},
 								},
 							},
@@ -396,11 +396,11 @@ func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1.Widget", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -438,7 +438,7 @@ func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetSpec(ref common.ReferenceC
 	}
 }
 
-func schema_rbac_apiserver_apis_widget_v1alpha1_WidgetStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

@@ -18,8 +18,8 @@ import (
 	generatedopenapi "github.com/stolostron/rbac-apiserver/apis/generated/openapi"
 	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
-	widgetapi "github.com/stolostron/rbac-apiserver/apis/widget"
-	widgetv1alpha1 "github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1"
+	sampleapi "github.com/stolostron/rbac-apiserver/apis/sample"
+	samplev1alpha1 "github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1"
 	"github.com/stolostron/rbac-apiserver/pkg/registry"
 )
 
@@ -29,14 +29,14 @@ var (
 )
 
 func init() {
-	// Register Widget API (rbac.stolostron.io/v1alpha1)
-	gv := schema.GroupVersion{Group: widgetapi.GroupName, Version: widgetv1alpha1.APIVersion}
-	Scheme.AddKnownTypes(gv, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
+	// Register Sample API group (rbac.stolostron.io/v1alpha1)
+	gv := schema.GroupVersion{Group: sampleapi.GroupName, Version: samplev1alpha1.APIVersion}
+	Scheme.AddKnownTypes(gv, &samplev1alpha1.Widget{}, &samplev1alpha1.WidgetList{})
 	metav1.AddToGroupVersion(Scheme, gv)
 
 	// Register internal version types for PATCH operations
-	internalGV := schema.GroupVersion{Group: widgetapi.GroupName, Version: runtime.APIVersionInternal}
-	Scheme.AddKnownTypes(internalGV, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
+	internalGV := schema.GroupVersion{Group: sampleapi.GroupName, Version: runtime.APIVersionInternal}
+	Scheme.AddKnownTypes(internalGV, &samplev1alpha1.Widget{}, &samplev1alpha1.WidgetList{})
 
 	// Register Relationship API (rbac.open-cluster-management.io/v1alpha1)
 	rbacGV := schema.GroupVersion{Group: rbacapi.GroupName, Version: rbacv1alpha1.APIVersion}
@@ -52,17 +52,17 @@ func init() {
 }
 
 func installAPI(s *genericapiserver.GenericAPIServer) error {
-	// Install Widget API (rbac.stolostron.io/v1alpha1)
+	// Install Sample API group (rbac.stolostron.io/v1alpha1)
 	widgetREST := registry.NewWidgetREST()
 
-	widgetStorage := map[string]rest.Storage{
+	sampleStorage := map[string]rest.Storage{
 		"widgets": widgetREST,
 	}
 
-	widgetAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(widgetapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
-	widgetAPIGroupInfo.VersionedResourcesStorageMap[widgetv1alpha1.APIVersion] = widgetStorage
+	sampleAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(sampleapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
+	sampleAPIGroupInfo.VersionedResourcesStorageMap[samplev1alpha1.APIVersion] = sampleStorage
 
-	if err := s.InstallAPIGroup(&widgetAPIGroupInfo); err != nil {
+	if err := s.InstallAPIGroup(&sampleAPIGroupInfo); err != nil {
 		return err
 	}
 

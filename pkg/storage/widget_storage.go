@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"time"
 
-	widgetapi "github.com/stolostron/rbac-apiserver/apis/widget"
-	"github.com/stolostron/rbac-apiserver/apis/widget/v1alpha1"
+	sampleapi "github.com/stolostron/rbac-apiserver/apis/sample"
+	"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1"
 )
 
 type MemoryStorage struct {
@@ -50,7 +50,7 @@ func (s *MemoryStorage) Get(namespace, name string) (*v1alpha1.Widget, error) {
 	key := s.getKey(namespace, name)
 	widget, exists := s.widgets[key]
 	if !exists {
-		return nil, errors.NewNotFound(schema.GroupResource{Group: widgetapi.GroupName, Resource: "widgets"}, name)
+		return nil, errors.NewNotFound(schema.GroupResource{Group: sampleapi.GroupName, Resource: "widgets"}, name)
 	}
 	return widget.DeepCopyObject().(*v1alpha1.Widget), nil
 }
@@ -61,7 +61,7 @@ func (s *MemoryStorage) List(ns string) (*v1alpha1.WidgetList, error) {
 
 	list := &v1alpha1.WidgetList{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: widgetapi.GroupName + "/" + v1alpha1.APIVersion,
+			APIVersion: sampleapi.GroupName + "/" + v1alpha1.APIVersion,
 			Kind:       "WidgetList",
 		},
 		Items: make([]v1alpha1.Widget, 0, len(s.widgets)),
@@ -110,7 +110,7 @@ func (s *MemoryStorage) Update(widget *v1alpha1.Widget) (*v1alpha1.Widget, error
 	key := s.getKey(widget.Namespace, widget.Name)
 	existing, exists := s.widgets[key]
 	if !exists {
-		return nil, errors.NewNotFound(schema.GroupResource{Group: widgetapi.GroupName, Resource: "widgets"}, widget.Name)
+		return nil, errors.NewNotFound(schema.GroupResource{Group: sampleapi.GroupName, Resource: "widgets"}, widget.Name)
 	}
 
 	widget.CreationTimestamp = existing.CreationTimestamp
@@ -128,7 +128,7 @@ func (s *MemoryStorage) Delete(namespace, name string) error {
 
 	key := s.getKey(namespace, name)
 	if _, exists := s.widgets[key]; !exists {
-		return errors.NewNotFound(schema.GroupResource{Group: widgetapi.GroupName, Resource: "widgets"}, name)
+		return errors.NewNotFound(schema.GroupResource{Group: sampleapi.GroupName, Resource: "widgets"}, name)
 	}
 
 	delete(s.widgets, key)
