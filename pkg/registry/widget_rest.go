@@ -19,9 +19,7 @@ import (
 )
 
 type WidgetREST struct {
-	storage      *storage.MemoryStorage
-	namespace    string
-	resourceName string
+	storage *storage.MemoryStorage
 }
 
 // Ensure WidgetREST implements the required interfaces
@@ -36,8 +34,7 @@ var _ rest.GroupVersionKindProvider = &WidgetREST{}
 
 func NewWidgetREST() *WidgetREST {
 	return &WidgetREST{
-		storage:      storage.NewMemoryStorage(),
-		resourceName: "widgets",
+		storage: storage.NewMemoryStorage(),
 	}
 }
 
@@ -52,7 +49,7 @@ func (r *WidgetREST) NewList() runtime.Object {
 func (r *WidgetREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	var namespace string
 
-	// Get namespace from request context (this is how Kubernetes passes the namespace)
+	// Get namespace from request context
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if ok && requestInfo.Namespace != "" {
 		namespace = requestInfo.Namespace
@@ -65,28 +62,18 @@ func (r *WidgetREST) Get(ctx context.Context, name string, options *metav1.GetOp
 		}
 	}
 
-	// For namespace-specific endpoints (like widgetsmce, widgetsdefault),
-	// the r.namespace field is just for filtering/validation, but we still
-	// use the namespace from the request context for the actual operation
-
 	return r.storage.Get(namespace, name)
 }
 
 func (r *WidgetREST) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	var namespace string
 
-	// For namespace-specific endpoints (like widgetsmce, widgetsdefault),
-	// use the configured namespace to filter the view
-	if r.namespace != "" {
-		namespace = r.namespace
-	} else {
-		// For the main widgets endpoint, get namespace from request context
-		requestInfo, ok := request.RequestInfoFrom(ctx)
-		if ok && requestInfo.Namespace != "" {
-			namespace = requestInfo.Namespace
-		}
-		// If no namespace specified, list all (namespace = "")
+	// Get namespace from request context
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if ok && requestInfo.Namespace != "" {
+		namespace = requestInfo.Namespace
 	}
+	// If no namespace specified, list all (namespace = "")
 
 	return r.storage.List(namespace)
 }
@@ -182,47 +169,14 @@ func (r *WidgetREST) GetSingularName() string {
 	return "widget"
 }
 
-// ResourceToKind converts a resource name to a Kind name (e.g., "widgetsdefault" -> "Widgetsdefault")
-func ResourceToKind(resource string) string {
-	if resource == "" || resource == "widgets" {
-		return "Widget"
-	}
-	// Capitalize first letter
-	if len(resource) > 0 {
-		resource = strings.ToUpper(resource[:1]) + resource[1:]
-	}
-	return resource
-}
-
 func (r *WidgetREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
-	kind := ResourceToKind(r.resourceName)
 	return schema.GroupVersionKind{
 		Group:   containingGV.Group,
 		Version: containingGV.Version,
-		Kind:    kind,
+		Kind:    "Widget",
 	}
 }
 
 func (r *WidgetREST) Destroy() {
 	// Cleanup resources if needed
-}
-
-func (r *WidgetREST) GetStorage() *storage.MemoryStorage {
-	return r.storage
-}
-
-func NewNSWidgetREST(ns string, resourceName string) *WidgetREST {
-	return &WidgetREST{
-		storage:      storage.NewMemoryStorage(),
-		namespace:    ns,
-		resourceName: resourceName,
-	}
-}
-
-func NewNSWidgetRESTWithSharedStorage(ns string, resourceName string, sharedStorage *storage.MemoryStorage) *WidgetREST {
-	return &WidgetREST{
-		storage:      sharedStorage,
-		namespace:    ns,
-		resourceName: resourceName,
-	}
 }

@@ -24,35 +24,16 @@ import (
 var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
-
-	// For test, NamespaceResources maps resource names to their target namespaces
-	NamespaceResources = map[string]string{
-		"widgetsdefault": "default",
-		"widgetsmce":     "multicluster-engine",
-	}
 )
 
 func init() {
 	gv := schema.GroupVersion{Group: widgetapi.GroupName, Version: widgetv1alpha1.APIVersion}
 	Scheme.AddKnownTypes(gv, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
-
-	// Register aliases for different widget resource types
-	for resource := range NamespaceResources {
-		kind := registry.ResourceToKind(resource)
-		Scheme.AddKnownTypeWithName(schema.GroupVersionKind{
-			Group: widgetapi.GroupName, Version: widgetv1alpha1.APIVersion, Kind: kind}, &widgetv1alpha1.Widget{})
-	}
-
 	metav1.AddToGroupVersion(Scheme, gv)
 
 	// Register internal version types for PATCH operations
 	internalGV := schema.GroupVersion{Group: widgetapi.GroupName, Version: runtime.APIVersionInternal}
 	Scheme.AddKnownTypes(internalGV, &widgetv1alpha1.Widget{}, &widgetv1alpha1.WidgetList{})
-	for resource := range NamespaceResources {
-		kind := registry.ResourceToKind(resource)
-		Scheme.AddKnownTypeWithName(schema.GroupVersionKind{
-			Group: widgetapi.GroupName, Version: runtime.APIVersionInternal, Kind: kind}, &widgetv1alpha1.Widget{})
-	}
 
 	// Register meta types
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
@@ -64,11 +45,7 @@ func installAPI(s *genericapiserver.GenericAPIServer) error {
 	restStorage := map[string]rest.Storage{
 		"widgets": widgetREST,
 	}
-	for resource, ns := range NamespaceResources {
-		nswidgetREST := registry.NewNSWidgetRESTWithSharedStorage(ns, resource, widgetREST.GetStorage())
-		restStorage[resource] = nswidgetREST
 
-	}
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(widgetapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	apiGroupInfo.VersionedResourcesStorageMap[widgetv1alpha1.APIVersion] = restStorage
 
