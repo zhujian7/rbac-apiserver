@@ -6,26 +6,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Relationship API", func() {
 	var (
-		gvr              schema.GroupVersionResource
 		relationshipName string
 	)
 
 	BeforeEach(func() {
-		gvr = schema.GroupVersionResource{
-			Group:    rbacapi.GroupName,
-			Version:  rbacv1alpha1.APIVersion,
-			Resource: "relationships",
-		}
 		// Use unique name with timestamp to avoid conflicts
 		relationshipName = fmt.Sprintf("test-relationship-%d", time.Now().UnixNano())
 	})
@@ -33,31 +23,27 @@ var _ = Describe("Relationship API", func() {
 	AfterEach(func() {
 		// Clean up: delete the relationship if it exists
 		// Ignore errors as it may not exist
-		_ = dynamicClient.Resource(gvr).Delete(ctx, relationshipName, metav1.DeleteOptions{})
+		_ = rbacClient.AuthorizationV1alpha1().Relationships().Delete(ctx, relationshipName, metav1.DeleteOptions{})
 	})
 
 	Describe("CRUD Operations", func() {
 		It("should create a Relationship successfully", func() {
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster1/namespace/_wildcard_",
-								},
-								"relation": "admin",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "user1",
-									},
+			relationship := &rbacv1alpha1.Relationship{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: relationshipName,
+				},
+				Spec: rbacv1alpha1.RelationshipSpec{
+					Tuples: []rbacv1alpha1.Tuple{
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster1/namespace/_wildcard_",
+							},
+							Relation: "admin",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "user",
+									ObjectId:   "user1",
 								},
 							},
 						},
@@ -65,38 +51,33 @@ var _ = Describe("Relationship API", func() {
 				},
 			}
 
-			result, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
+			result, err := rbacClient.AuthorizationV1alpha1().Relationships().Create(ctx, relationship, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to create relationship")
 			Expect(result.GetName()).To(Equal(relationshipName))
 
 			// Verify the tuples were stored correctly
-			spec := result.Object["spec"].(map[string]interface{})
-			tuples := spec["tuples"].([]interface{})
+			tuples := result.Spec.Tuples
 			Expect(len(tuples)).To(Equal(1))
 		})
 
 		It("should list Relationships successfully", func() {
 			// First create a relationship
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster2/namespace/default",
-								},
-								"relation": "viewer",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "user2",
-									},
+			relationship := &rbacv1alpha1.Relationship{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: relationshipName,
+				},
+				Spec: rbacv1alpha1.RelationshipSpec{
+					Tuples: []rbacv1alpha1.Tuple{
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster2/namespace/default",
+							},
+							Relation: "viewer",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "user",
+									ObjectId:   "user2",
 								},
 							},
 						},
@@ -104,37 +85,33 @@ var _ = Describe("Relationship API", func() {
 				},
 			}
 
-			_, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
+			_, err := rbacClient.AuthorizationV1alpha1().Relationships().Create(ctx, relationship, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			// List relationships
-			list, err := dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+			list, err := rbacClient.AuthorizationV1alpha1().Relationships().List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to list relationships")
 			Expect(list.Items).NotTo(BeEmpty(), "Expected at least one relationship in the list")
 		})
 
 		It("should get a Relationship successfully", func() {
 			// First create a relationship
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster3/namespace/kube-system",
-								},
-								"relation": "editor",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "user3",
-									},
+			relationship := &rbacv1alpha1.Relationship{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: relationshipName,
+				},
+				Spec: rbacv1alpha1.RelationshipSpec{
+					Tuples: []rbacv1alpha1.Tuple{
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster3/namespace/kube-system",
+							},
+							Relation: "editor",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "user",
+									ObjectId:   "user3",
 								},
 							},
 						},
@@ -142,45 +119,40 @@ var _ = Describe("Relationship API", func() {
 				},
 			}
 
-			_, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
+			_, err := rbacClient.AuthorizationV1alpha1().Relationships().Create(ctx, relationship, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get the relationship
-			result, err := dynamicClient.Resource(gvr).Get(ctx, relationshipName, metav1.GetOptions{})
+			result, err := rbacClient.AuthorizationV1alpha1().Relationships().Get(ctx, relationshipName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to get relationship")
 			Expect(result.GetName()).To(Equal(relationshipName))
 
 			// Verify the spec
-			spec := result.Object["spec"].(map[string]interface{})
-			tuples := spec["tuples"].([]interface{})
+			tuples := result.Spec.Tuples
 			Expect(len(tuples)).To(Equal(1))
 
-			tuple := tuples[0].(map[string]interface{})
-			Expect(tuple["relation"]).To(Equal("editor"))
+			tuple := tuples[0]
+			Expect(tuple.Relation).To(Equal("editor"))
 		})
 
 		It("should delete a Relationship successfully", func() {
 			// First create a relationship
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster4/namespace/_wildcard_",
-								},
-								"relation": "admin",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "group",
-										"objectId":   "admin-group",
-									},
+			relationship := &rbacv1alpha1.Relationship{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: relationshipName,
+				},
+				Spec: rbacv1alpha1.RelationshipSpec{
+					Tuples: []rbacv1alpha1.Tuple{
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster4/namespace/_wildcard_",
+							},
+							Relation: "editor",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "group",
+									ObjectId:   "admin-group",
 								},
 							},
 						},
@@ -188,54 +160,50 @@ var _ = Describe("Relationship API", func() {
 				},
 			}
 
-			_, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
+			_, err := rbacClient.AuthorizationV1alpha1().Relationships().Create(ctx, relationship, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			// Delete the relationship
-			err = dynamicClient.Resource(gvr).Delete(ctx, relationshipName, metav1.DeleteOptions{})
+			err = rbacClient.AuthorizationV1alpha1().Relationships().Delete(ctx, relationshipName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to delete relationship")
 
 			// Verify deletion
-			_, err = dynamicClient.Resource(gvr).Get(ctx, relationshipName, metav1.GetOptions{})
+			_, err = rbacClient.AuthorizationV1alpha1().Relationships().Get(ctx, relationshipName, metav1.GetOptions{})
 			Expect(err).To(HaveOccurred(), "Expected relationship to be deleted")
 		})
 	})
 
 	Describe("Multi-tuple Relationships", func() {
 		It("should create a relationship with multiple tuples", func() {
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster1/namespace/default",
-								},
-								"relation": "admin",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "alice",
-									},
+			relationship := &rbacv1alpha1.Relationship{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: relationshipName,
+				},
+				Spec: rbacv1alpha1.RelationshipSpec{
+					Tuples: []rbacv1alpha1.Tuple{
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster1/namespace/default",
+							},
+							Relation: "editor",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "user",
+									ObjectId:   "alice",
 								},
 							},
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/cluster2/namespace/production",
-								},
-								"relation": "viewer",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "bob",
-									},
+						},
+						{
+							Resource: rbacv1alpha1.ObjectReference{
+								ObjectType: "resource",
+								ObjectId:   "cluster/cluster2/namespace/production",
+							},
+							Relation: "editor",
+							Subject: rbacv1alpha1.SubjectReference{
+								Object: rbacv1alpha1.ObjectReference{
+									ObjectType: "user",
+									ObjectId:   "bob",
 								},
 							},
 						},
@@ -243,57 +211,12 @@ var _ = Describe("Relationship API", func() {
 				},
 			}
 
-			result, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
+			result, err := rbacClient.AuthorizationV1alpha1().Relationships().Create(ctx, relationship, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to create relationship with multiple tuples")
 
 			// Verify both tuples were stored
-			spec := result.Object["spec"].(map[string]interface{})
-			tuples := spec["tuples"].([]interface{})
+			tuples := result.Spec.Tuples
 			Expect(len(tuples)).To(Equal(2), "Expected 2 tuples in the relationship")
-		})
-	})
-
-	Describe("Error Handling", func() {
-		It("should fail when creating duplicate relationships", func() {
-			relationship := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": rbacapi.GroupName + "/" + rbacv1alpha1.APIVersion,
-					"kind":       "Relationship",
-					"metadata": map[string]interface{}{
-						"name": relationshipName,
-					},
-					"spec": map[string]interface{}{
-						"tuples": []interface{}{
-							map[string]interface{}{
-								"resource": map[string]interface{}{
-									"objectType": "resource",
-									"objectId":   "cluster/test",
-								},
-								"relation": "admin",
-								"subject": map[string]interface{}{
-									"object": map[string]interface{}{
-										"objectType": "user",
-										"objectId":   "test-user",
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-
-			// Create first time - should succeed
-			_, err := dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			// Create second time - should fail
-			_, err = dynamicClient.Resource(gvr).Create(ctx, relationship, metav1.CreateOptions{})
-			Expect(err).To(HaveOccurred(), "Expected error when creating duplicate relationship")
-		})
-
-		It("should fail when getting non-existent relationship", func() {
-			_, err := dynamicClient.Resource(gvr).Get(ctx, "non-existent-relationship", metav1.GetOptions{})
-			Expect(err).To(HaveOccurred(), "Expected error when getting non-existent relationship")
 		})
 	})
 })

@@ -1,7 +1,7 @@
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha1.test-rbac.open-cluster-management.io
+  name: v1alpha1.authorization.open-cluster-management.io
   labels:
     {{- include "rbac-apiserver.labels" . | nindent 4 }}
   {{- if .Values.tls.certManager.enabled }}
@@ -9,34 +9,7 @@ metadata:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rbac-apiserver.fullname" . }}-serving-cert
   {{- end }}
 spec:
-  group: test-rbac.open-cluster-management.io
-  groupPriorityMinimum: 1000
-  versionPriority: 15
-  service:
-    name: {{ include "rbac-apiserver.fullname" . }}
-    namespace: {{ .Release.Namespace }}
-    port: {{ .Values.service.port }}
-  version: v1alpha1
-  {{- if .Values.tls.certManager.enabled }}
-  insecureSkipTLSVerify: false
-  {{- else }}
-  # In production, you should provide a proper CA bundle
-  # For now, we skip TLS verification if not using cert-manager
-  insecureSkipTLSVerify: true
-  {{- end }}
----
-apiVersion: apiregistration.k8s.io/v1
-kind: APIService
-metadata:
-  name: v1alpha1.multicluster-rbac.open-cluster-management.io
-  labels:
-    {{- include "rbac-apiserver.labels" . | nindent 4 }}
-  {{- if .Values.tls.certManager.enabled }}
-  annotations:
-    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rbac-apiserver.fullname" . }}-serving-cert
-  {{- end }}
-spec:
-  group: multicluster-rbac.open-cluster-management.io
+  group: authorization.open-cluster-management.io
   groupPriorityMinimum: 1000
   versionPriority: 15
   service:

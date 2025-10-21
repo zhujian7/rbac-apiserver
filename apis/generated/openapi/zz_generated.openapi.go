@@ -21,10 +21,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipSpec": schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipSpec(ref),
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference": schema_rbac_apiserver_apis_rbac_v1alpha1_SubjectReference(ref),
 		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Tuple":            schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref),
-		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget":         schema_rbac_apiserver_apis_sample_v1alpha1_Widget(ref),
-		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetList":     schema_rbac_apiserver_apis_sample_v1alpha1_WidgetList(ref),
-		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec":     schema_rbac_apiserver_apis_sample_v1alpha1_WidgetSpec(ref),
-		"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus":   schema_rbac_apiserver_apis_sample_v1alpha1_WidgetStatus(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                            schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                        schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                         schema_pkg_apis_meta_v1_APIResource(ref),
@@ -298,163 +294,6 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref common.ReferenceCallback
 		},
 		Dependencies: []string{
 			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference", "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference"},
-	}
-}
-
-func schema_rbac_apiserver_apis_sample_v1alpha1_Widget(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Widget represents a sample widget resource",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Spec defines the desired state of Widget",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Status defines the observed state of Widget",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetSpec", "github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.WidgetStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "WidgetList contains a list of Widget",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Items is the list of Widget objects",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1.Widget", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "WidgetSpec defines the desired state of Widget",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name is the name of the widget",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Description describes what the widget does",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"size": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Size indicates the size of the widget",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-				},
-				Required: []string{"name", "description", "size"},
-			},
-		},
-	}
-}
-
-func schema_rbac_apiserver_apis_sample_v1alpha1_WidgetStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "WidgetStatus defines the observed state of Widget",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Phase indicates the current phase of the widget",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -1415,15 +1254,12 @@ func schema_pkg_apis_meta_v1_InternalEvent(ref common.ReferenceCallback) common.
 					"Object": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Bookmark: the object (instance of a type being watched) where\n   only ResourceVersion field is set. On successful restart of watch from a\n   bookmark resourceVersion, client is guaranteed to not get repeat event\n   nor miss any events.\n * If Type is Error: *api.Status is recommended; other types may make sense\n   depending on context.",
-							Ref:         ref("k8s.io/apimachinery/pkg/runtime.Object"),
 						},
 					},
 				},
 				Required: []string{"Type", "Object"},
 			},
 		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/runtime.Object"},
 	}
 }
 

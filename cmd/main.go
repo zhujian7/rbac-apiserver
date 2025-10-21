@@ -16,10 +16,7 @@ import (
 	"k8s.io/klog/v2"
 
 	generatedopenapi "github.com/stolostron/rbac-apiserver/apis/generated/openapi"
-	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
-	sampleapi "github.com/stolostron/rbac-apiserver/apis/sample"
-	samplev1alpha1 "github.com/stolostron/rbac-apiserver/apis/sample/v1alpha1"
 	"github.com/stolostron/rbac-apiserver/pkg/registry"
 )
 
@@ -29,22 +26,13 @@ var (
 )
 
 func init() {
-	// Register Sample API group (test-rbac.open-cluster-management.io/v1alpha1)
-	gv := schema.GroupVersion{Group: sampleapi.GroupName, Version: samplev1alpha1.APIVersion}
-	Scheme.AddKnownTypes(gv, &samplev1alpha1.Widget{}, &samplev1alpha1.WidgetList{})
-	metav1.AddToGroupVersion(Scheme, gv)
-
-	// Register internal version types for PATCH operations
-	internalGV := schema.GroupVersion{Group: sampleapi.GroupName, Version: runtime.APIVersionInternal}
-	Scheme.AddKnownTypes(internalGV, &samplev1alpha1.Widget{}, &samplev1alpha1.WidgetList{})
-
 	// Register Relationship API (rbac.open-cluster-management.io/v1alpha1)
-	rbacGV := schema.GroupVersion{Group: rbacapi.GroupName, Version: rbacv1alpha1.APIVersion}
+	rbacGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: rbacv1alpha1.APIVersion}
 	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
 	metav1.AddToGroupVersion(Scheme, rbacGV)
 
 	// Register internal version types for PATCH operations
-	rbacInternalGV := schema.GroupVersion{Group: rbacapi.GroupName, Version: runtime.APIVersionInternal}
+	rbacInternalGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: runtime.APIVersionInternal}
 	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
 
 	// Register meta types
@@ -52,20 +40,6 @@ func init() {
 }
 
 func installAPI(s *genericapiserver.GenericAPIServer) error {
-	// Install Sample API group (test-rbac.open-cluster-management.io/v1alpha1)
-	widgetREST := registry.NewWidgetREST()
-
-	sampleStorage := map[string]rest.Storage{
-		"widgets": widgetREST,
-	}
-
-	sampleAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(sampleapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
-	sampleAPIGroupInfo.VersionedResourcesStorageMap[samplev1alpha1.APIVersion] = sampleStorage
-
-	if err := s.InstallAPIGroup(&sampleAPIGroupInfo); err != nil {
-		return err
-	}
-
 	// Install Relationship API (rbac.open-cluster-management.io/v1alpha1)
 	relationshipREST := registry.NewRelationshipREST()
 
@@ -73,7 +47,7 @@ func installAPI(s *genericapiserver.GenericAPIServer) error {
 		"relationships": relationshipREST,
 	}
 
-	rbacAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(rbacapi.GroupName, Scheme, metav1.ParameterCodec, Codecs)
+	rbacAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(rbacv1alpha1.GroupName, Scheme, metav1.ParameterCodec, Codecs)
 	rbacAPIGroupInfo.VersionedResourcesStorageMap[rbacv1alpha1.APIVersion] = rbacStorage
 
 	return s.InstallAPIGroup(&rbacAPIGroupInfo)
