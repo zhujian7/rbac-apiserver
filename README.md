@@ -8,8 +8,7 @@ This project implements a standalone API server that extends the Kubernetes API 
 
 ## Features
 
-- **Sample Widget API** (`test-rbac.open-cluster-management.io/v1alpha1`) - Example API with full CRUD operations
-- **Relationship API** (`multicluster-rbac.open-cluster-management.io/v1alpha1`) - Multi-cluster RBAC relationships based on SpiceDB tuple model
+- **Relationship API** (`authorization.open-cluster-management.io/v1alpha1`) - Multi-cluster RBAC relationships based on SpiceDB tuple model
 - **In-memory storage** backend for development and testing
 - **OpenAPI schema generation** for automatic API documentation
 - **Helm chart deployment** with flexible TLS configuration
@@ -26,13 +25,13 @@ This project implements a standalone API server that extends the Kubernetes API 
 │   ┌──────────────────┐                  ┌──────────────────────────────────┐   │
 │   │  kube-apiserver  │─────────────────▶│  rbac-apiserver (aggregated)     │   │
 │   │                  │                  │                                  │   │
-│   │  APIServices:    │                  │  Sample Widget API:              │   │
-│   │  - v1alpha1.     │                  │    test-rbac.open-cluster-       │   │
-│   │    test-rbac...  │                  │    management.io/v1alpha1        │   │
-│   │  - v1alpha1.     │                  │                                  │   │
-│   │    multicluster  │                  │  Relationship API:               │   │
-│   │    -rbac...      │                  │    multicluster-rbac.open-       │   │
-│   │                  │                  │    cluster-management.io/v1alpha1│   │
+│   │  APIServices:    │                  │  Relationship API:               │   │
+│   │  - v1alpha1.     │                  │    authorization.open-cluster-   │   │
+│   │    authorization │                  │    management.io/v1alpha1        │   │
+│   │    .open-cluster │                  │                                  │   │
+│   │    -management   │                  │  Resources:                      │   │
+│   │    .io           │                  │  - Relationships                 │   │
+│   │                  │                  │                                  │   │
 │   └──────────────────┘                  └──────────────────────────────────┘   │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
@@ -95,26 +94,11 @@ helm install rbac-apiserver charts/rbac-apiserver/ \
 
 ```bash
 # Check APIService status
-kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io
-kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io
-
-# Create a test Widget
-kubectl apply -f - <<EOF
-apiVersion: test-rbac.open-cluster-management.io/v1alpha1
-kind: Widget
-metadata:
-  name: test-widget
-  namespace: default
-spec:
-  size: 10
-EOF
-
-# List Widgets
-kubectl get widgets -n default
+kubectl get apiservices v1alpha1.authorization.open-cluster-management.io
 
 # Create a test Relationship
 kubectl apply -f - <<EOF
-apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: test-relationship
@@ -141,10 +125,8 @@ kubectl get relationships
 ```text
 .
 ├── apis/                       # API definitions
-│   ├── generated/             # Generated OpenAPI specs
-│   ├── sample/                # Sample Widget API (test-rbac.open-cluster-management.io)
-│   │   └── v1alpha1/         # v1alpha1 API version
-│   └── rbac/                  # Relationship API (multicluster-rbac.open-cluster-management.io)
+│   ├── generated/             # Generated client, informers, listers, and OpenAPI specs
+│   └── rbac/                  # Relationship API (authorization.open-cluster-management.io)
 │       └── v1alpha1/         # v1alpha1 API version
 ├── charts/                    # Helm charts
 │   └── rbac-apiserver/       # Main Helm chart
@@ -247,24 +229,12 @@ See [charts/rbac-apiserver/README.md](charts/rbac-apiserver/README.md) for compl
 
 ## API Reference
 
-### Widget Resource (Example/Test API)
-
-The Widget API is a sample API for demonstration and testing purposes.
-
-```yaml
-apiVersion: test-rbac.open-cluster-management.io/v1alpha1
-kind: Widget
-metadata:
-  name: example-widget
-  namespace: default
-spec:
-  size: 10  # Widget size (integer)
-```
-
 ### Relationship Resource (Multi-cluster RBAC)
 
+The Relationship API manages authorization relationships based on the SpiceDB tuple model.
+
 ```yaml
-apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: user2-cluster1-admin
@@ -284,11 +254,11 @@ For detailed information about the Relationship API, see [docs/relationship-api.
 
 ### Supported Operations
 
-- **Create**: `kubectl create -f widget.yaml`
-- **Get**: `kubectl get widget example-widget -n default`
-- **List**: `kubectl get widgets -n default`
-- **Update**: `kubectl edit widget example-widget -n default`
-- **Delete**: `kubectl delete widget example-widget -n default`
+- **Create**: `kubectl create -f relationship.yaml`
+- **Get**: `kubectl get relationship user2-cluster1-admin`
+- **List**: `kubectl get relationships`
+- **Update**: `kubectl edit relationship user2-cluster1-admin`
+- **Delete**: `kubectl delete relationship user2-cluster1-admin`
 
 ## CI/CD
 
@@ -334,8 +304,7 @@ Contributions are welcome! Please ensure:
 
 ```bash
 # Check APIService status
-kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io -o yaml
-kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io -o yaml
+kubectl get apiservices v1alpha1.authorization.open-cluster-management.io -o yaml
 
 # Check API server pods
 kubectl get pods -n rbac-apiserver-system

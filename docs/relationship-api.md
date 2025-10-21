@@ -7,10 +7,10 @@ This document describes the Relationship API framework that has been added to th
 ## API Details
 
 ### API Group and Version
-- **API Group**: `multicluster-rbac.open-cluster-management.io`
+- **API Group**: `authorization.open-cluster-management.io`
 - **Version**: `v1alpha1`
 - **Resource**: `relationships`
-- **Full API Path**: `/apis/multicluster-rbac.open-cluster-management.io/v1alpha1/relationships`
+- **Full API Path**: `/apis/authorization.open-cluster-management.io/v1alpha1/relationships`
 
 ### Resource Types
 
@@ -18,7 +18,7 @@ This document describes the Relationship API framework that has been added to th
 Represents a relationship tuple for SpiceDB-based authorization.
 
 ```yaml
-apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: example-relationship
@@ -98,21 +98,21 @@ spec:
 All CRUD operations are fully functional with in-memory storage:
 
 1. **Create Operation**:
-   - Endpoint: `POST /apis/multicluster-rbac.open-cluster-management.io/v1alpha1/relationships`
+   - Endpoint: `POST /apis/authorization.open-cluster-management.io/v1alpha1/relationships`
    - ✅ Creates relationship tuples in memory
    - ✅ Generates UUID if name not provided
    - ✅ Sets metadata (timestamps, UID, resource version)
 
 2. **List Operation**:
-   - Endpoint: `GET /apis/multicluster-rbac.open-cluster-management.io/v1alpha1/relationships`
+   - Endpoint: `GET /apis/authorization.open-cluster-management.io/v1alpha1/relationships`
    - ✅ Returns all stored relationships
 
 3. **Get Operation**:
-   - Endpoint: `GET /apis/multicluster-rbac.open-cluster-management.io/v1alpha1/relationships/{name}`
+   - Endpoint: `GET /apis/authorization.open-cluster-management.io/v1alpha1/relationships/{name}`
    - ✅ Retrieves specific relationship by name
 
 4. **Delete Operation**:
-   - Endpoint: `DELETE /apis/multicluster-rbac.open-cluster-management.io/v1alpha1/relationships/{name}`
+   - Endpoint: `DELETE /apis/authorization.open-cluster-management.io/v1alpha1/relationships/{name}`
    - ✅ Removes relationship from storage
 
 ## Files Created/Modified
@@ -179,9 +179,10 @@ This implementation follows the design documented in [bin/spicedb-investigation.
 ## Example Usage (Once Implemented)
 
 ### Create Relationship
+
 ```bash
 kubectl apply -f - <<EOF
-apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: user2-cluster1-admin
@@ -199,11 +200,13 @@ EOF
 ```
 
 ### List Relationships
+
 ```bash
 kubectl get relationships
 ```
 
 ### Delete Relationship
+
 ```bash
 kubectl delete relationship user2-cluster1-admin
 ```
