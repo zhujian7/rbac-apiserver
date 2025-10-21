@@ -66,27 +66,12 @@ The following table lists the configurable parameters and their default values:
 After installation, verify the API server is running:
 
 ```bash
-# Check if the APIServices are available
-kubectl get apiservices v1alpha1.test-rbac.open-cluster-management.io
-kubectl get apiservices v1alpha1.multicluster-rbac.open-cluster-management.io
-
-# Create a test widget
-kubectl apply -f - <<EOF
-apiVersion: test-rbac.open-cluster-management.io/v1alpha1
-kind: Widget
-metadata:
-  name: test-widget
-  namespace: default
-spec:
-  size: 10
-EOF
-
-# List widgets
-kubectl get widgets -n default
+# Check if the APIService is available
+kubectl get apiservices v1alpha1.authorization.open-cluster-management.io
 
 # Create a test relationship
 kubectl apply -f - <<EOF
-apiVersion: multicluster-rbac.open-cluster-management.io/v1alpha1
+apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: Relationship
 metadata:
   name: test-relationship
