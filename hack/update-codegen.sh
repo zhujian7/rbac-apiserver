@@ -31,6 +31,6 @@ kube::codegen::gen_client \
 kube::codegen::gen_openapi \
     --output-dir "${SCRIPT_ROOT}/apis/generated/openapi" \
     --output-pkg "${THIS_PKG}/apis/generated/openapi" \
-    --report-filename "${SCRIPT_ROOT}/violations.report" \
+    --report-filename "${SCRIPT_ROOT}/hack/violations.report" \
     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
     "${SCRIPT_ROOT}/apis"

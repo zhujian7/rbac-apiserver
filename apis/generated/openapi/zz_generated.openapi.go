@@ -207,6 +207,11 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipSpec(ref common.Refere
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"tuples": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Tuples is a list of relationship tuples to be created or deleted",
 							Type:        []string{"array"},

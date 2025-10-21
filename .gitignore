@@ -1,5 +1,4 @@
 .claude
 bin/*
 _output
-violations.report
 .idea/

@@ -21,6 +21,7 @@ type Relationship struct {
 // RelationshipSpec defines the desired relationship tuples
 type RelationshipSpec struct {
 	// Tuples is a list of relationship tuples to be created or deleted
+	// +listType=atomic
 	Tuples []Tuple `json:"tuples"`
 }
 
