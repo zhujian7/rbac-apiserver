@@ -77,7 +77,7 @@ spec:
    - Installed API group in installAPI function
    - Supports both OpenAPI v2 and v3
 
-5. **OpenAPI Generation** ([hack/update-openapi.sh](hack/update-openapi.sh))
+5. **OpenAPI Generation** ([hack/update-codegen.sh](hack/update-codegen.sh))
    - Updated to include rbac/v1alpha1 package
    - Generated OpenAPI specs include Relationship types
    - Verified in [apis/generated/openapi/zz_generated.openapi.go](apis/generated/openapi/zz_generated.openapi.go)
@@ -129,7 +129,7 @@ All CRUD operations are fully functional with in-memory storage:
 ### Modified Files
 
 - `cmd/main.go` - Added Relationship API registration
-- `hack/update-openapi.sh` - Added rbac/v1alpha1 to OpenAPI generation
+- `hack/update-codegen.sh` - Added rbac/v1alpha1 to code generation (including OpenAPI)
 - `apis/generated/openapi/zz_generated.openapi.go` - Auto-generated OpenAPI specs
 
 ## Current Storage: In-Memory

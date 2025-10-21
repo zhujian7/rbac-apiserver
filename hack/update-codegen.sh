@@ -1,6 +1,4 @@
-set -o errexit
-set -o nounset
-set -o pipefail
+#!/bin/bash
 
 set -o errexit
 set -o nounset
@@ -27,5 +25,12 @@ kube::codegen::gen_client \
     --with-watch \
     --output-dir "${SCRIPT_ROOT}/apis/generated" \
     --output-pkg "${THIS_PKG}/apis/generated" \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
+    "${SCRIPT_ROOT}/apis"
+
+kube::codegen::gen_openapi \
+    --output-dir "${SCRIPT_ROOT}/apis/generated/openapi" \
+    --output-pkg "${THIS_PKG}/apis/generated/openapi" \
+    --report-filename "${SCRIPT_ROOT}/violations.report" \
     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
     "${SCRIPT_ROOT}/apis"
