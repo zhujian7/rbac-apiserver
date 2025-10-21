@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
-	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 )
 
@@ -38,7 +37,7 @@ func (s *RelationshipMemoryStorage) Get(name string) (*v1alpha1.Relationship, er
 	relationship, exists := s.relationships[name]
 	if !exists {
 		return nil, errors.NewNotFound(
-			schema.GroupResource{Group: rbacapi.GroupName, Resource: "relationships"},
+			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			name,
 		)
 	}
@@ -52,7 +51,7 @@ func (s *RelationshipMemoryStorage) List() (*v1alpha1.RelationshipList, error) {
 
 	list := &v1alpha1.RelationshipList{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: rbacapi.GroupName + "/" + v1alpha1.APIVersion,
+			APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 			Kind:       "RelationshipList",
 		},
 		Items: make([]v1alpha1.Relationship, 0, len(s.relationships)),
@@ -78,7 +77,7 @@ func (s *RelationshipMemoryStorage) Create(relationship *v1alpha1.Relationship) 
 	// Check if already exists
 	if _, exists := s.relationships[relationship.Name]; exists {
 		return nil, errors.NewAlreadyExists(
-			schema.GroupResource{Group: rbacapi.GroupName, Resource: "relationships"},
+			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			relationship.Name,
 		)
 	}
@@ -103,7 +102,7 @@ func (s *RelationshipMemoryStorage) Update(relationship *v1alpha1.Relationship) 
 	existing, exists := s.relationships[relationship.Name]
 	if !exists {
 		return nil, errors.NewNotFound(
-			schema.GroupResource{Group: rbacapi.GroupName, Resource: "relationships"},
+			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			relationship.Name,
 		)
 	}
@@ -126,7 +125,7 @@ func (s *RelationshipMemoryStorage) Delete(name string) error {
 
 	if _, exists := s.relationships[name]; !exists {
 		return errors.NewNotFound(
-			schema.GroupResource{Group: rbacapi.GroupName, Resource: "relationships"},
+			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			name,
 		)
 	}

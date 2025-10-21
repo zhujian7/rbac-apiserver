@@ -2,9 +2,11 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // Relationship represents a relationship tuple for SpiceDB-based authorization
 // This API is designed to manage relationships between subjects and resources
 // following the SpiceDB relationship model.
@@ -57,6 +59,7 @@ type SubjectReference struct {
 	Relation string `json:"relation,omitempty"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // RelationshipList contains a list of Relationship objects
 type RelationshipList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -64,35 +67,4 @@ type RelationshipList struct {
 
 	// Items is the list of Relationship objects
 	Items []Relationship `json:"items"`
-}
-
-// DeepCopyObject implements runtime.Object interface for Relationship
-func (r *Relationship) DeepCopyObject() runtime.Object {
-	return &Relationship{
-		TypeMeta:   r.TypeMeta,
-		ObjectMeta: *r.ObjectMeta.DeepCopy(),
-		Spec:       r.Spec.DeepCopy(),
-	}
-}
-
-// DeepCopyObject implements runtime.Object interface for RelationshipList
-func (rl *RelationshipList) DeepCopyObject() runtime.Object {
-	out := &RelationshipList{
-		TypeMeta: rl.TypeMeta,
-		ListMeta: rl.ListMeta,
-		Items:    make([]Relationship, len(rl.Items)),
-	}
-	for i := range rl.Items {
-		out.Items[i] = *rl.Items[i].DeepCopyObject().(*Relationship)
-	}
-	return out
-}
-
-// DeepCopy creates a deep copy of RelationshipSpec
-func (rs *RelationshipSpec) DeepCopy() RelationshipSpec {
-	out := RelationshipSpec{
-		Tuples: make([]Tuple, len(rs.Tuples)),
-	}
-	copy(out.Tuples, rs.Tuples)
-	return out
 }

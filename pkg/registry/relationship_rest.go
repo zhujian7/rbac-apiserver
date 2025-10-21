@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	rbacapi "github.com/stolostron/rbac-apiserver/apis/rbac"
 	"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 	"github.com/stolostron/rbac-apiserver/pkg/storage"
 )
@@ -55,7 +54,7 @@ func (r *RelationshipREST) Create(ctx context.Context, obj runtime.Object, creat
 	options *metav1.CreateOptions) (runtime.Object, error) {
 	relationship := obj.(*v1alpha1.Relationship)
 	relationship.TypeMeta = metav1.TypeMeta{
-		APIVersion: rbacapi.GroupName + "/" + v1alpha1.APIVersion,
+		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "Relationship",
 	}
 	return r.storage.Create(relationship)
@@ -79,7 +78,7 @@ func (r *RelationshipREST) Watch(ctx context.Context, options *metav1.ListOption
 
 func (r *RelationshipREST) ConvertToTable(ctx context.Context, object runtime.Object,
 	tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: rbacapi.GroupName, Resource: "relationships"}).
+	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"}).
 		ConvertToTable(ctx, object, tableOptions)
 }
 

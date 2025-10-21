@@ -6,16 +6,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/dynamic"
+	"github.com/stolostron/rbac-apiserver/apis/generated/clientset/versioned"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
-	kubeConfig    *rest.Config
-	dynamicClient dynamic.Interface
-	ctx           context.Context
-	cancelFunc    context.CancelFunc
+	kubeConfig *rest.Config
+	rbacClient versioned.Interface
+	ctx        context.Context
+	cancelFunc context.CancelFunc
 )
 
 func TestE2E(t *testing.T) {
@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred(), "Failed to get kubeconfig")
 
 	// Create dynamic client
-	dynamicClient, err = dynamic.NewForConfig(kubeConfig)
+	rbacClient, err = versioned.NewForConfig(kubeConfig)
 	Expect(err).NotTo(HaveOccurred(), "Failed to create dynamic client")
 })
 
