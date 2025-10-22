@@ -15,103 +15,280 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference":  schema_rbac_apiserver_apis_rbac_v1alpha1_ObjectReference(ref),
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Relationship":     schema_rbac_apiserver_apis_rbac_v1alpha1_Relationship(ref),
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipList": schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipList(ref),
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipSpec": schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipSpec(ref),
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference": schema_rbac_apiserver_apis_rbac_v1alpha1_SubjectReference(ref),
-		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Tuple":            schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                            schema_pkg_apis_meta_v1_APIGroup(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                        schema_pkg_apis_meta_v1_APIGroupList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                         schema_pkg_apis_meta_v1_APIResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                     schema_pkg_apis_meta_v1_APIResourceList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                         schema_pkg_apis_meta_v1_APIVersions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ApplyOptions":                        schema_pkg_apis_meta_v1_ApplyOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Condition":                           schema_pkg_apis_meta_v1_Condition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.CreateOptions":                       schema_pkg_apis_meta_v1_CreateOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                       schema_pkg_apis_meta_v1_DeleteOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                            schema_pkg_apis_meta_v1_Duration(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldSelectorRequirement":            schema_pkg_apis_meta_v1_FieldSelectorRequirement(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldsV1":                            schema_pkg_apis_meta_v1_FieldsV1(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                          schema_pkg_apis_meta_v1_GetOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                           schema_pkg_apis_meta_v1_GroupKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                       schema_pkg_apis_meta_v1_GroupResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                        schema_pkg_apis_meta_v1_GroupVersion(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":            schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                    schema_pkg_apis_meta_v1_GroupVersionKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":                schema_pkg_apis_meta_v1_GroupVersionResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                       schema_pkg_apis_meta_v1_InternalEvent(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                       schema_pkg_apis_meta_v1_LabelSelector(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":            schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                                schema_pkg_apis_meta_v1_List(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                            schema_pkg_apis_meta_v1_ListMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                         schema_pkg_apis_meta_v1_ListOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ManagedFieldsEntry":                  schema_pkg_apis_meta_v1_ManagedFieldsEntry(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                           schema_pkg_apis_meta_v1_MicroTime(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                          schema_pkg_apis_meta_v1_ObjectMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                      schema_pkg_apis_meta_v1_OwnerReference(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadata":               schema_pkg_apis_meta_v1_PartialObjectMetadata(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadataList":           schema_pkg_apis_meta_v1_PartialObjectMetadataList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                               schema_pkg_apis_meta_v1_Patch(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PatchOptions":                        schema_pkg_apis_meta_v1_PatchOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                       schema_pkg_apis_meta_v1_Preconditions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                           schema_pkg_apis_meta_v1_RootPaths(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":           schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                              schema_pkg_apis_meta_v1_Status(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                         schema_pkg_apis_meta_v1_StatusCause(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                       schema_pkg_apis_meta_v1_StatusDetails(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Table":                               schema_pkg_apis_meta_v1_Table(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition":               schema_pkg_apis_meta_v1_TableColumnDefinition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableOptions":                        schema_pkg_apis_meta_v1_TableOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRow":                            schema_pkg_apis_meta_v1_TableRow(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRowCondition":                   schema_pkg_apis_meta_v1_TableRowCondition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                                schema_pkg_apis_meta_v1_Time(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                           schema_pkg_apis_meta_v1_Timestamp(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                            schema_pkg_apis_meta_v1_TypeMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.UpdateOptions":                       schema_pkg_apis_meta_v1_UpdateOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                          schema_pkg_apis_meta_v1_WatchEvent(ref),
-		"k8s.io/apimachinery/pkg/runtime.RawExtension":                             schema_k8sio_apimachinery_pkg_runtime_RawExtension(ref),
-		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                                 schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
-		"k8s.io/apimachinery/pkg/runtime.Unknown":                                  schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
-		"k8s.io/apimachinery/pkg/version.Info":                                     schema_k8sio_apimachinery_pkg_version_Info(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.AllowedItem":             schema_rbac_apiserver_apis_rbac_v1alpha1_AllowedItem(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.NamespacedName":          schema_rbac_apiserver_apis_rbac_v1alpha1_NamespacedName(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Permission":              schema_rbac_apiserver_apis_rbac_v1alpha1_Permission(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBinding":       schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBinding(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBindingList":   schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBindingList(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBindingSpec":   schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBindingSpec(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequest":       schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequest(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestList":   schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestList(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestSpec":   schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestSpec(ref),
+		"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestStatus": schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestStatus(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                   schema_pkg_apis_meta_v1_APIGroup(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                               schema_pkg_apis_meta_v1_APIGroupList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                schema_pkg_apis_meta_v1_APIResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                            schema_pkg_apis_meta_v1_APIResourceList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                                schema_pkg_apis_meta_v1_APIVersions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ApplyOptions":                               schema_pkg_apis_meta_v1_ApplyOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Condition":                                  schema_pkg_apis_meta_v1_Condition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.CreateOptions":                              schema_pkg_apis_meta_v1_CreateOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                              schema_pkg_apis_meta_v1_DeleteOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                                   schema_pkg_apis_meta_v1_Duration(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldSelectorRequirement":                   schema_pkg_apis_meta_v1_FieldSelectorRequirement(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldsV1":                                   schema_pkg_apis_meta_v1_FieldsV1(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                                 schema_pkg_apis_meta_v1_GetOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                                  schema_pkg_apis_meta_v1_GroupKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                              schema_pkg_apis_meta_v1_GroupResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                               schema_pkg_apis_meta_v1_GroupVersion(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":                   schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                           schema_pkg_apis_meta_v1_GroupVersionKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":                       schema_pkg_apis_meta_v1_GroupVersionResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                              schema_pkg_apis_meta_v1_InternalEvent(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                              schema_pkg_apis_meta_v1_LabelSelector(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":                   schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                                       schema_pkg_apis_meta_v1_List(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                                   schema_pkg_apis_meta_v1_ListMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                                schema_pkg_apis_meta_v1_ListOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ManagedFieldsEntry":                         schema_pkg_apis_meta_v1_ManagedFieldsEntry(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                                  schema_pkg_apis_meta_v1_MicroTime(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                                 schema_pkg_apis_meta_v1_ObjectMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                             schema_pkg_apis_meta_v1_OwnerReference(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadata":                      schema_pkg_apis_meta_v1_PartialObjectMetadata(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadataList":                  schema_pkg_apis_meta_v1_PartialObjectMetadataList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                                      schema_pkg_apis_meta_v1_Patch(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PatchOptions":                               schema_pkg_apis_meta_v1_PatchOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                              schema_pkg_apis_meta_v1_Preconditions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                                  schema_pkg_apis_meta_v1_RootPaths(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":                  schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                                     schema_pkg_apis_meta_v1_Status(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                                schema_pkg_apis_meta_v1_StatusCause(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                              schema_pkg_apis_meta_v1_StatusDetails(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Table":                                      schema_pkg_apis_meta_v1_Table(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition":                      schema_pkg_apis_meta_v1_TableColumnDefinition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableOptions":                               schema_pkg_apis_meta_v1_TableOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRow":                                   schema_pkg_apis_meta_v1_TableRow(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRowCondition":                          schema_pkg_apis_meta_v1_TableRowCondition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                                       schema_pkg_apis_meta_v1_Time(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                                  schema_pkg_apis_meta_v1_Timestamp(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                                   schema_pkg_apis_meta_v1_TypeMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.UpdateOptions":                              schema_pkg_apis_meta_v1_UpdateOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                                 schema_pkg_apis_meta_v1_WatchEvent(ref),
+		"k8s.io/apimachinery/pkg/runtime.RawExtension":                                    schema_k8sio_apimachinery_pkg_runtime_RawExtension(ref),
+		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                                        schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
+		"k8s.io/apimachinery/pkg/runtime.Unknown":                                         schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
+		"k8s.io/apimachinery/pkg/version.Info":                                            schema_k8sio_apimachinery_pkg_version_Info(ref),
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_ObjectReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_AllowedItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ObjectReference identifies a resource in the system",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"objectType": {
+					"cluster": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ObjectType is the type of the object (e.g., \"resource\", \"namespace\", \"cluster\")",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
-					"objectId": {
+					"namespacedNames": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"namespace",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "ObjectId is the identifier for the specific object Format examples:\n  - \"cluster/cluster1/namespace/_wildcard_\"\n  - \"cluster/cluster1/namespace/namespace1/core/pods/_wildcard_\"",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.NamespacedName"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"objectType", "objectId"},
+				Required: []string{"namespacedNames"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.NamespacedName"},
+	}
+}
+
+func schema_rbac_apiserver_apis_rbac_v1alpha1_NamespacedName(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"names": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"namespace"},
 			},
 		},
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_Relationship(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_Permission(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Relationship represents a relationship tuple for SpiceDB-based authorization This API is designed to manage relationships between subjects and resources following the SpiceDB relationship model.",
+				Description: "Permissions represents a single permission",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource identifies the object being accessed",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"groups": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Groups is the group of the resources",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"namespaces": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespaces is the namespace of the resource",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"names": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Names of the resources",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role describes the type of role on the resource (e.g., \"admin\", \"viewer\", \"editor\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"clusters": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Cluster is the cluster of the resource",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resources", "groups", "namespaces", "names", "role", "clusters"},
+			},
+		},
+	}
+}
+
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PermissionBinding represents a set of permissions to bind to a subject.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -138,22 +315,22 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_Relationship(ref common.ReferenceC
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec defines the relationship tuples to create or delete",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipSpec"),
+							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBindingSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.RelationshipSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBindingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "RelationshipList contains a list of Relationship objects",
+				Description: "PermissionBinding contains a list of PermissionBinding objects",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -184,7 +361,7 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipList(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Relationship"),
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBinding"),
 									},
 								},
 							},
@@ -195,110 +372,248 @@ func schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipList(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Relationship", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_RelationshipSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionBindingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "RelationshipSpec defines the desired relationship tuples",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"tuples": {
+					"subject": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Subject identifies the entity that has the permissions",
+							Default:     map[string]interface{}{},
+							Ref:         ref("k8s.io/api/rbac/v1.Subject"),
+						},
+					},
+					"permissions": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Tuples is a list of relationship tuples to be created or deleted",
+							Description: "Permissions is a list of permissions the subject has",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Tuple"),
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Permission"),
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"tuples"},
+				Required: []string{"subject", "permissions"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Tuple"},
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.Permission", "k8s.io/api/rbac/v1.Subject"},
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_SubjectReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SubjectReference identifies the subject of a relationship",
+				Description: "PermissionBinding represents a set of permissions to bind to a subject.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"object": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Object identifies the subject",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference"),
-						},
-					},
-					"relation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Relation is an optional relation for the subject (used for group membership, etc.)",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the relationship tuples to create or delete",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestStatus"),
+						},
+					},
 				},
-				Required: []string{"object"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference"},
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestSpec", "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequestStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_rbac_apiserver_apis_rbac_v1alpha1_Tuple(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Tuple represents a single relationship tuple in SpiceDB format It defines a relationship between a subject and a resource",
+				Description: "PermissionRequest contains a list of PermissionRequest objects",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"resource": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resource identifies the object being accessed",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference"),
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
-					"relation": {
+					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Relation describes the type of relationship (e.g., \"admin\", \"viewer\", \"editor\")",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Items is the list of Relationship objects",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequest"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.PermissionRequest", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "grou is the group of the resource",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"subject": {
+					"resource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Subject identifies the entity that has the relationship",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference"),
+							Description: "resource is the resource type",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subResource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "subResource is the sub resource of the resource type",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"verb": {
+						SchemaProps: spec.SchemaProps{
+							Description: "verb is the action to the resource",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"cluster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "cluster name",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "namespace",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "name",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"resource", "relation", "subject"},
+				Required: []string{"group", "resource", "verb"},
+			},
+		},
+	}
+}
+
+func schema_rbac_apiserver_apis_rbac_v1alpha1_PermissionRequestStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"allowedList": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"cluster",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "allowedList is a list of",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.AllowedItem"),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.ObjectReference", "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.SubjectReference"},
+			"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1.AllowedItem"},
 	}
 }
 

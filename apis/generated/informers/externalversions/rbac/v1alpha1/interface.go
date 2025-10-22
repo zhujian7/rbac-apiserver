@@ -10,8 +10,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// Relationships returns a RelationshipInformer.
-	Relationships() RelationshipInformer
+	// PermissionBindings returns a PermissionBindingInformer.
+	PermissionBindings() PermissionBindingInformer
+	// PermissionRequests returns a PermissionRequestInformer.
+	PermissionRequests() PermissionRequestInformer
 }
 
 type version struct {
@@ -25,7 +27,12 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// Relationships returns a RelationshipInformer.
-func (v *version) Relationships() RelationshipInformer {
-	return &relationshipInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// PermissionBindings returns a PermissionBindingInformer.
+func (v *version) PermissionBindings() PermissionBindingInformer {
+	return &permissionBindingInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// PermissionRequests returns a PermissionRequestInformer.
+func (v *version) PermissionRequests() PermissionRequestInformer {
+	return &permissionRequestInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

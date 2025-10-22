@@ -4,6 +4,10 @@
 
 package v1alpha1
 
-// RelationshipListerExpansion allows custom methods to be added to
-// RelationshipLister.
-type RelationshipListerExpansion interface{}
+// PermissionBindingListerExpansion allows custom methods to be added to
+// PermissionBindingLister.
+type PermissionBindingListerExpansion interface{}
+
+// PermissionRequestListerExpansion allows custom methods to be added to
+// PermissionRequestLister.
+type PermissionRequestListerExpansion interface{}

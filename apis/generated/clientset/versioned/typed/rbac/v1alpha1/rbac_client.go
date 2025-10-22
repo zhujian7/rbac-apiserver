@@ -14,7 +14,8 @@ import (
 
 type AuthorizationV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	RelationshipsGetter
+	PermissionBindingsGetter
+	PermissionRequestsGetter
 }
 
 // AuthorizationV1alpha1Client is used to interact with features provided by the authorization.open-cluster-management.io group.
@@ -22,8 +23,12 @@ type AuthorizationV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *AuthorizationV1alpha1Client) Relationships() RelationshipInterface {
-	return newRelationships(c)
+func (c *AuthorizationV1alpha1Client) PermissionBindings() PermissionBindingInterface {
+	return newPermissionBindings(c)
+}
+
+func (c *AuthorizationV1alpha1Client) PermissionRequests() PermissionRequestInterface {
+	return newPermissionRequests(c)
 }
 
 // NewForConfig creates a new AuthorizationV1alpha1Client for the given config.

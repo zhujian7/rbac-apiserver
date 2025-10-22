@@ -4,4 +4,6 @@
 
 package v1alpha1
 
-type RelationshipExpansion interface{}
+type PermissionBindingExpansion interface{}
+
+type PermissionRequestExpansion interface{}

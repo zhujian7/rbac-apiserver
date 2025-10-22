@@ -14,8 +14,12 @@ type FakeAuthorizationV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeAuthorizationV1alpha1) Relationships() v1alpha1.RelationshipInterface {
-	return newFakeRelationships(c)
+func (c *FakeAuthorizationV1alpha1) PermissionBindings() v1alpha1.PermissionBindingInterface {
+	return newFakePermissionBindings(c)
+}
+
+func (c *FakeAuthorizationV1alpha1) PermissionRequests() v1alpha1.PermissionRequestInterface {
+	return newFakePermissionRequests(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
