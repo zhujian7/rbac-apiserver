@@ -28,23 +28,23 @@ var (
 func init() {
 	// Register Relationship API (rbac.open-cluster-management.io/v1alpha1)
 	rbacGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: rbacv1alpha1.APIVersion}
-	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
+	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionRequest{})
 	metav1.AddToGroupVersion(Scheme, rbacGV)
 
 	// Register internal version types for PATCH operations
 	rbacInternalGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: runtime.APIVersionInternal}
-	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.Relationship{}, &rbacv1alpha1.RelationshipList{})
+	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionRequest{})
 
 	// Register meta types
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
 }
 
 func installAPI(s *genericapiserver.GenericAPIServer) error {
-	// Install Relationship API (rbac.open-cluster-management.io/v1alpha1)
-	relationshipREST := registry.NewRelationshipREST()
+	// Install PermissionBinding API (rbac.open-cluster-management.io/v1alpha1)
+	permissionBindingREST := registry.NewPermissionBindingREST()
 
 	rbacStorage := map[string]rest.Storage{
-		"relationships": relationshipREST,
+		"permissionbindings": permissionBindingREST,
 	}
 
 	rbacAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(rbacv1alpha1.GroupName, Scheme, metav1.ParameterCodec, Codecs)

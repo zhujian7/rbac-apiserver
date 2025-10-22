@@ -39,8 +39,10 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=authorization.open-cluster-management.io, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("relationships"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Authorization().V1alpha1().Relationships().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("permissionbindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authorization().V1alpha1().PermissionBindings().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("permissionrequests"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authorization().V1alpha1().PermissionRequests().Informer()}, nil
 
 	}
 

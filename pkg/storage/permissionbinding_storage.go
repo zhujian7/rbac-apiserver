@@ -15,57 +15,57 @@ import (
 
 // RelationshipMemoryStorage provides in-memory storage for Relationship resources
 // This storage simulates what will eventually be stored in SpiceDB
-type RelationshipMemoryStorage struct {
-	mu             sync.RWMutex
-	relationships  map[string]*v1alpha1.Relationship
-	versionCounter int64
+type PermissionBindingMemoryStorage struct {
+	mu                 sync.RWMutex
+	permissionBindings map[string]*v1alpha1.PermissionBinding
+	versionCounter     int64
 }
 
 // NewRelationshipMemoryStorage creates a new in-memory storage for relationships
-func NewRelationshipMemoryStorage() *RelationshipMemoryStorage {
-	return &RelationshipMemoryStorage{
-		relationships:  make(map[string]*v1alpha1.Relationship),
-		versionCounter: 1,
+func NewPermissionBindingMemoryStorage() *PermissionBindingMemoryStorage {
+	return &PermissionBindingMemoryStorage{
+		permissionBindings: make(map[string]*v1alpha1.PermissionBinding),
+		versionCounter:     1,
 	}
 }
 
 // Get retrieves a relationship by name
-func (s *RelationshipMemoryStorage) Get(name string) (*v1alpha1.Relationship, error) {
+func (s *PermissionBindingMemoryStorage) Get(name string) (*v1alpha1.PermissionBinding, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	relationship, exists := s.relationships[name]
+	relationship, exists := s.permissionBindings[name]
 	if !exists {
 		return nil, errors.NewNotFound(
 			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			name,
 		)
 	}
-	return relationship.DeepCopyObject().(*v1alpha1.Relationship), nil
+	return relationship.DeepCopyObject().(*v1alpha1.PermissionBinding), nil
 }
 
 // List retrieves all relationships
-func (s *RelationshipMemoryStorage) List() (*v1alpha1.RelationshipList, error) {
+func (s *PermissionBindingMemoryStorage) List() (*v1alpha1.PermissionBindingList, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	list := &v1alpha1.RelationshipList{
+	list := &v1alpha1.PermissionBindingList{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 			Kind:       "RelationshipList",
 		},
-		Items: make([]v1alpha1.Relationship, 0, len(s.relationships)),
+		Items: make([]v1alpha1.PermissionBinding, 0, len(s.permissionBindings)),
 	}
 
-	for _, relationship := range s.relationships {
-		list.Items = append(list.Items, *relationship.DeepCopyObject().(*v1alpha1.Relationship))
+	for _, relationship := range s.permissionBindings {
+		list.Items = append(list.Items, *relationship.DeepCopyObject().(*v1alpha1.PermissionBinding))
 	}
 
 	return list, nil
 }
 
 // Create creates a new relationship
-func (s *RelationshipMemoryStorage) Create(relationship *v1alpha1.Relationship) (*v1alpha1.Relationship, error) {
+func (s *PermissionBindingMemoryStorage) Create(relationship *v1alpha1.PermissionBinding) (*v1alpha1.PermissionBinding, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (s *RelationshipMemoryStorage) Create(relationship *v1alpha1.Relationship) 
 	}
 
 	// Check if already exists
-	if _, exists := s.relationships[relationship.Name]; exists {
+	if _, exists := s.permissionBindings[relationship.Name]; exists {
 		return nil, errors.NewAlreadyExists(
 			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			relationship.Name,
@@ -90,16 +90,16 @@ func (s *RelationshipMemoryStorage) Create(relationship *v1alpha1.Relationship) 
 	relationship.UID = uuid.NewUUID()
 
 	// Store the relationship
-	s.relationships[relationship.Name] = relationship.DeepCopyObject().(*v1alpha1.Relationship)
+	s.permissionBindings[relationship.Name] = relationship.DeepCopyObject().(*v1alpha1.PermissionBinding)
 	return relationship, nil
 }
 
 // Update updates an existing relationship
-func (s *RelationshipMemoryStorage) Update(relationship *v1alpha1.Relationship) (*v1alpha1.Relationship, error) {
+func (s *PermissionBindingMemoryStorage) Update(relationship *v1alpha1.PermissionBinding) (*v1alpha1.PermissionBinding, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	existing, exists := s.relationships[relationship.Name]
+	existing, exists := s.permissionBindings[relationship.Name]
 	if !exists {
 		return nil, errors.NewNotFound(
 			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
@@ -114,22 +114,22 @@ func (s *RelationshipMemoryStorage) Update(relationship *v1alpha1.Relationship) 
 	s.versionCounter++
 
 	// Update the relationship
-	s.relationships[relationship.Name] = relationship.DeepCopyObject().(*v1alpha1.Relationship)
+	s.permissionBindings[relationship.Name] = relationship.DeepCopyObject().(*v1alpha1.PermissionBinding)
 	return relationship, nil
 }
 
 // Delete removes a relationship
-func (s *RelationshipMemoryStorage) Delete(name string) error {
+func (s *PermissionBindingMemoryStorage) Delete(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, exists := s.relationships[name]; !exists {
+	if _, exists := s.permissionBindings[name]; !exists {
 		return errors.NewNotFound(
 			schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"},
 			name,
 		)
 	}
 
-	delete(s.relationships, name)
+	delete(s.permissionBindings, name)
 	return nil
 }
