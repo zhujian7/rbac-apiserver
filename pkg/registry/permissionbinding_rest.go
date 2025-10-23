@@ -61,13 +61,13 @@ func (r *PermissionBindingREST) Create(ctx context.Context, obj runtime.Object, 
 		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "PermissionBinding",
 	}
-	
+
 	// Create in storage first
 	createdObj, err := r.storage.Create(permissionBinding)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Sync to SpiceDB
 	if r.integration != nil {
 		if err := r.integration.CreatePermissionBinding(ctx, permissionBinding); err != nil {
@@ -76,20 +76,18 @@ func (r *PermissionBindingREST) Create(ctx context.Context, obj runtime.Object, 
 			// The object exists in storage, but authorization might not work correctly
 		}
 	}
-	
+
 	return createdObj, nil
 }
 
 func (r *PermissionBindingREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	// Get the object before deleting for return value
-	obj, err := r.storage.Get(name)
+	permissionBinding, err := r.storage.Get(name)
 	if err != nil {
 		return nil, false, err
 	}
 
-	permissionBinding := obj.(*v1alpha1.PermissionBinding)
-	
 	// Delete from SpiceDB first
 	if r.integration != nil {
 		if err := r.integration.DeletePermissionBinding(ctx, permissionBinding); err != nil {
@@ -97,10 +95,10 @@ func (r *PermissionBindingREST) Delete(ctx context.Context, name string, deleteV
 			// Continue with storage deletion even if SpiceDB deletion fails
 		}
 	}
-	
+
 	// Delete from storage
 	err = r.storage.Delete(name)
-	return obj, true, err
+	return permissionBinding, true, err
 }
 
 func (r *PermissionBindingREST) Watch(ctx context.Context, options *metav1.ListOptions) (watch.Interface, error) {

@@ -29,7 +29,7 @@ func NewSpiceDBIntegration(manager *spicedb.Manager) *SpiceDBIntegration {
 // CreatePermissionBinding handles the creation of a PermissionBinding and syncs it to SpiceDB
 func (s *SpiceDBIntegration) CreatePermissionBinding(ctx context.Context, pb *rbacv1alpha1.PermissionBinding) error {
 	klog.V(2).Infof("Creating PermissionBinding relationships in SpiceDB for %s", pb.Name)
-	
+
 	// Transform PermissionBinding to SpiceDB relationships
 	updates, err := s.transformer.TransformPermissionBinding(pb)
 	if err != nil {
@@ -49,14 +49,14 @@ func (s *SpiceDBIntegration) CreatePermissionBinding(ctx context.Context, pb *rb
 // UpdatePermissionBinding handles the update of a PermissionBinding and syncs changes to SpiceDB
 func (s *SpiceDBIntegration) UpdatePermissionBinding(ctx context.Context, oldPB, newPB *rbacv1alpha1.PermissionBinding) error {
 	klog.V(2).Infof("Updating PermissionBinding relationships in SpiceDB for %s", newPB.Name)
-	
+
 	// Delete old relationships
 	if oldPB != nil {
 		deleteUpdates, err := s.transformer.CreateRelationshipUpdatesForDeletion(oldPB)
 		if err != nil {
 			return fmt.Errorf("failed to create deletion updates: %w", err)
 		}
-		
+
 		err = s.writeRelationships(ctx, deleteUpdates)
 		if err != nil {
 			klog.Warningf("Failed to delete old relationships for PermissionBinding %s: %v", oldPB.Name, err)
@@ -82,7 +82,7 @@ func (s *SpiceDBIntegration) UpdatePermissionBinding(ctx context.Context, oldPB,
 // DeletePermissionBinding handles the deletion of a PermissionBinding and removes relationships from SpiceDB
 func (s *SpiceDBIntegration) DeletePermissionBinding(ctx context.Context, pb *rbacv1alpha1.PermissionBinding) error {
 	klog.V(2).Infof("Deleting PermissionBinding relationships from SpiceDB for %s", pb.Name)
-	
+
 	// Transform to deletion updates
 	deleteUpdates, err := s.transformer.CreateRelationshipUpdatesForDeletion(pb)
 	if err != nil {
@@ -102,7 +102,7 @@ func (s *SpiceDBIntegration) DeletePermissionBinding(ctx context.Context, pb *rb
 // EvaluatePermissionRequest evaluates a PermissionRequest against SpiceDB
 func (s *SpiceDBIntegration) EvaluatePermissionRequest(ctx context.Context, pr *rbacv1alpha1.PermissionRequest, userID, userType string) (*v1.CheckPermissionResponse, error) {
 	klog.V(2).Infof("Evaluating PermissionRequest %s for user %s", pr.Name, userID)
-	
+
 	// Transform PermissionRequest to SpiceDB check request
 	checkReq, err := s.transformer.CheckPermissionFromRequest(pr, userID, userType)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *SpiceDBIntegration) EvaluatePermissionRequest(ctx context.Context, pr *
 // ProcessPermissionRequestStatus updates the status of a PermissionRequest based on SpiceDB evaluation
 func (s *SpiceDBIntegration) ProcessPermissionRequestStatus(ctx context.Context, pr *rbacv1alpha1.PermissionRequest, userID, userType string) error {
 	klog.V(2).Infof("Processing PermissionRequest status for %s", pr.Name)
-	
+
 	// Evaluate the permission request
 	response, err := s.EvaluatePermissionRequest(ctx, pr, userID, userType)
 	if err != nil {
@@ -133,7 +133,7 @@ func (s *SpiceDBIntegration) ProcessPermissionRequestStatus(ctx context.Context,
 	// For now, we'll create a simple status based on the permission check
 	// In a real implementation, you might want to query multiple permissions
 	// and build a more comprehensive allowed list
-	
+
 	if response.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION {
 		// User has permission - add to allowed list
 		allowedItem := rbacv1alpha1.AllowedItem{
@@ -145,7 +145,7 @@ func (s *SpiceDBIntegration) ProcessPermissionRequestStatus(ctx context.Context,
 				},
 			},
 		}
-		
+
 		// Update or create the allowed list
 		found := false
 		for i, item := range pr.Status.AllowedList {

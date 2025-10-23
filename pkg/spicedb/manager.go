@@ -11,8 +11,8 @@ import (
 
 // Manager provides access to the embedded SpiceDB instance
 type Manager struct {
-	mu              sync.RWMutex
-	embeddedSpiceDB *EmbeddedSpiceDB
+	mu                sync.RWMutex
+	embeddedSpiceDB   *EmbeddedSpiceDB
 	permissionsClient v1.PermissionsServiceClient
 	schemaClient      v1.SchemaServiceClient
 }
@@ -34,7 +34,7 @@ func (m *Manager) Initialize(ctx context.Context, embeddedDB *EmbeddedSpiceDB) e
 	defer m.mu.Unlock()
 
 	m.embeddedSpiceDB = embeddedDB
-	
+
 	// Create gRPC clients
 	conn := embeddedDB.GRPCConnection()
 	m.permissionsClient = v1.NewPermissionsServiceClient(conn)

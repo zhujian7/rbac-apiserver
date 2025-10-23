@@ -58,9 +58,9 @@ func installAPI(s *genericapiserver.GenericAPIServer, spiceDBIntegration *integr
 }
 
 type Config struct {
-	GenericConfig       *genericapiserver.RecommendedConfig
-	SpiceDB             *spicedb.EmbeddedSpiceDB
-	SpiceDBIntegration  *integration.SpiceDBIntegration
+	GenericConfig      *genericapiserver.RecommendedConfig
+	SpiceDB            *spicedb.EmbeddedSpiceDB
+	SpiceDBIntegration *integration.SpiceDBIntegration
 }
 
 type MyAPIServer struct {

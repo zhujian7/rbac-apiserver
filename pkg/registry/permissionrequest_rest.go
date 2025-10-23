@@ -61,20 +61,20 @@ func (r *PermissionRequestREST) Create(ctx context.Context, obj runtime.Object, 
 		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "PermissionRequest",
 	}
-	
+
 	// Create in storage first
 	createdObj, err := r.storage.Create(permissionRequest)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Evaluate against SpiceDB and update status
 	if r.integration != nil {
 		// For now, we'll use a placeholder user ID and type
 		// In a real implementation, this would come from the request context
 		userID := "system:admin" // TODO: Extract from request context
 		userType := "user"
-		
+
 		if err := r.integration.ProcessPermissionRequestStatus(ctx, permissionRequest, userID, userType); err != nil {
 			klog.Errorf("Failed to process PermissionRequest %s status with SpiceDB: %v", permissionRequest.Name, err)
 			// Note: We don't fail the creation if SpiceDB evaluation fails
@@ -88,7 +88,7 @@ func (r *PermissionRequestREST) Create(ctx context.Context, obj runtime.Object, 
 			}
 		}
 	}
-	
+
 	return createdObj, nil
 }
 

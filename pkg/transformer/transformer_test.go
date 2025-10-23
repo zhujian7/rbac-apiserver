@@ -16,11 +16,11 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 	transformer := NewSpiceDBTransformer()
 
 	tests := []struct {
-		name            string
+		name              string
 		permissionBinding *rbacv1alpha1.PermissionBinding
-		expectedCount   int
-		expectError     bool
-		validateFunc    func(t *testing.T, updates []*v1.RelationshipUpdate)
+		expectedCount     int
+		expectError       bool
+		validateFunc      func(t *testing.T, updates []*v1.RelationshipUpdate)
 	}{
 		{
 			name: "simple user permission binding",
@@ -35,11 +35,11 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 					},
 					Permissions: []rbacv1alpha1.Permission{
 						{
-							Role:      "admin",
-							Clusters:  []string{"cluster1"},
+							Role:       "admin",
+							Clusters:   []string{"cluster1"},
 							Namespaces: []string{"default"},
-							Resources: []string{"pods"},
-							Names:     []string{"pod1"},
+							Resources:  []string{"pods"},
+							Names:      []string{"pod1"},
 						},
 					},
 				},
@@ -49,7 +49,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 			validateFunc: func(t *testing.T, updates []*v1.RelationshipUpdate) {
 				require.Len(t, updates, 1)
 				update := updates[0]
-				
+
 				assert.Equal(t, v1.RelationshipUpdate_OPERATION_CREATE, update.Operation)
 				assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
 				assert.Equal(t, "cluster/cluster1/namespace/default/name/pod1", update.Relationship.Resource.ObjectId)
@@ -71,11 +71,11 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 					},
 					Permissions: []rbacv1alpha1.Permission{
 						{
-							Role:      "viewer",
-							Clusters:  []string{"cluster1"},
+							Role:       "viewer",
+							Clusters:   []string{"cluster1"},
 							Namespaces: []string{"default", "kube-system"},
-							Resources: []string{"pods", "services"},
-							Names:     []string{"*"},
+							Resources:  []string{"pods", "services"},
+							Names:      []string{"*"},
 						},
 					},
 				},
@@ -84,7 +84,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 			expectError:   false,
 			validateFunc: func(t *testing.T, updates []*v1.RelationshipUpdate) {
 				require.Len(t, updates, 4)
-				
+
 				// Check that all relationships are for the group subject
 				for _, update := range updates {
 					assert.Equal(t, "group", update.Relationship.Subject.Object.ObjectType)
@@ -107,11 +107,11 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 					},
 					Permissions: []rbacv1alpha1.Permission{
 						{
-							Role:      "editor",
-							Clusters:  []string{"cluster1"},
+							Role:       "editor",
+							Clusters:   []string{"cluster1"},
 							Namespaces: []string{"default"},
-							Resources: []string{"configmaps"},
-							Names:     []string{"config1"},
+							Resources:  []string{"configmaps"},
+							Names:      []string{"config1"},
 						},
 					},
 				},
@@ -121,7 +121,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 			validateFunc: func(t *testing.T, updates []*v1.RelationshipUpdate) {
 				require.Len(t, updates, 1)
 				update := updates[0]
-				
+
 				assert.Equal(t, "serviceaccount", update.Relationship.Subject.Object.ObjectType)
 				assert.Equal(t, "default:my-sa", update.Relationship.Subject.Object.ObjectId)
 				assert.Equal(t, "editor", update.Relationship.Relation)
@@ -151,7 +151,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 			validateFunc: func(t *testing.T, updates []*v1.RelationshipUpdate) {
 				require.Len(t, updates, 1)
 				update := updates[0]
-				
+
 				assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
 				assert.Equal(t, "*", update.Relationship.Resource.ObjectId)
 			},
@@ -167,15 +167,15 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			updates, err := transformer.TransformPermissionBinding(tt.permissionBinding)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Len(t, updates, tt.expectedCount)
-			
+
 			if tt.validateFunc != nil {
 				tt.validateFunc(t, updates)
 			}
@@ -187,10 +187,10 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 	transformer := NewSpiceDBTransformer()
 
 	tests := []struct {
-		name              string
-		permissionRequest *rbacv1alpha1.PermissionRequest
-		expectError       bool
-		expectedResource  string
+		name               string
+		permissionRequest  *rbacv1alpha1.PermissionRequest
+		expectError        bool
+		expectedResource   string
 		expectedPermission string
 	}{
 		{
@@ -238,12 +238,12 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			checkReq, err := transformer.TransformPermissionRequest(tt.permissionRequest)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			require.NotNil(t, checkReq)
 			assert.Equal(t, "resource", checkReq.Resource.ObjectType)
@@ -273,7 +273,7 @@ func TestSpiceDBTransformer_CheckPermissionFromRequest(t *testing.T) {
 	checkReq, err := transformer.CheckPermissionFromRequest(permissionRequest, "alice", "user")
 	require.NoError(t, err)
 	require.NotNil(t, checkReq)
-	
+
 	assert.Equal(t, "resource", checkReq.Resource.ObjectType)
 	assert.Equal(t, "cluster/cluster1/name/pod1", checkReq.Resource.ObjectId)
 	assert.Equal(t, "view", checkReq.Permission)
@@ -295,11 +295,11 @@ func TestSpiceDBTransformer_CreateRelationshipUpdatesForDeletion(t *testing.T) {
 			},
 			Permissions: []rbacv1alpha1.Permission{
 				{
-					Role:      "admin",
-					Clusters:  []string{"cluster1"},
+					Role:       "admin",
+					Clusters:   []string{"cluster1"},
 					Namespaces: []string{"default"},
-					Resources: []string{"pods"},
-					Names:     []string{"pod1"},
+					Resources:  []string{"pods"},
+					Names:      []string{"pod1"},
 				},
 			},
 		},
@@ -308,7 +308,7 @@ func TestSpiceDBTransformer_CreateRelationshipUpdatesForDeletion(t *testing.T) {
 	deleteUpdates, err := transformer.CreateRelationshipUpdatesForDeletion(permissionBinding)
 	require.NoError(t, err)
 	require.Len(t, deleteUpdates, 1)
-	
+
 	update := deleteUpdates[0]
 	assert.Equal(t, v1.RelationshipUpdate_OPERATION_DELETE, update.Operation)
 	assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
@@ -392,7 +392,7 @@ func TestSpiceDBTransformer_MapFunctions(t *testing.T) {
 
 		for _, tt := range tests {
 			result := transformer.buildResourceID(tt.cluster, tt.namespace, tt.name)
-			assert.Equal(t, tt.expected, result, "buildResourceID(%s, %s, %s) = %s, want %s", 
+			assert.Equal(t, tt.expected, result, "buildResourceID(%s, %s, %s) = %s, want %s",
 				tt.cluster, tt.namespace, tt.name, result, tt.expected)
 		}
 	})
@@ -482,13 +482,13 @@ func TestSpiceDBTransformer_ConvertSubject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := transformer.convertSubject(tt.subject)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Nil(t, result)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedRef.Object.ObjectType, result.Object.ObjectType)

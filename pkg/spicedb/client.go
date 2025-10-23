@@ -32,10 +32,10 @@ func NewEmbeddedSpiceDB(ctx context.Context) (*EmbeddedSpiceDB, error) {
 
 	// Create a buffered connection listener
 	lis := bufconn.Listen(bufSize)
-	
+
 	// Create a gRPC server and register the SpiceDB services
 	grpcServer := grpc.NewServer()
-	
+
 	// Start the SpiceDB server in its own goroutine
 	// This will register the gRPC services on the server
 	go func() {
@@ -46,7 +46,7 @@ func NewEmbeddedSpiceDB(ctx context.Context) (*EmbeddedSpiceDB, error) {
 
 	// For a proper implementation, we'd need to register SpiceDB's gRPC services
 	// on our grpcServer, but for now we'll create a working structure
-	
+
 	// Start the gRPC server
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil && ctx.Err() == nil {
