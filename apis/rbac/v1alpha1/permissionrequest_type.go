@@ -10,7 +10,7 @@ type PermissionRequest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Spec defines the relationship tuples to create or delete
+	// Spec defines the permission request
 	Spec PermissionRequestSpec `json:"spec,omitempty"`
 
 	Status PermissionRequestStatus `json:"status,omitempty"`
@@ -67,6 +67,6 @@ type PermissionRequestList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// Items is the list of Relationship objects
+	// Items is the list of PermissionRequest objects
 	Items []PermissionRequest `json:"items"`
 }

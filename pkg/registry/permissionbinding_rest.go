@@ -19,7 +19,7 @@ type PermissionBindingREST struct {
 	storage *storage.PermissionBindingMemoryStorage
 }
 
-// Ensure RelationshipREST implements the required interfaces
+// Ensure PermissionBindingREST implements the required interfaces
 var _ rest.Creater = &PermissionBindingREST{}
 var _ rest.Lister = &PermissionBindingREST{}
 var _ rest.Getter = &PermissionBindingREST{}
@@ -52,12 +52,12 @@ func (r *PermissionBindingREST) List(ctx context.Context, options *internalversi
 
 func (r *PermissionBindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions) (runtime.Object, error) {
-	relationship := obj.(*v1alpha1.PermissionBinding)
-	relationship.TypeMeta = metav1.TypeMeta{
+	permissionBinding := obj.(*v1alpha1.PermissionBinding)
+	permissionBinding.TypeMeta = metav1.TypeMeta{
 		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
-		Kind:       "Relationship",
+		Kind:       "PermissionBinding",
 	}
-	return r.storage.Create(relationship)
+	return r.storage.Create(permissionBinding)
 }
 
 func (r *PermissionBindingREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc,
@@ -78,24 +78,24 @@ func (r *PermissionBindingREST) Watch(ctx context.Context, options *metav1.ListO
 
 func (r *PermissionBindingREST) ConvertToTable(ctx context.Context, object runtime.Object,
 	tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: v1alpha1.GroupName, Resource: "relationships"}).
+	return rest.NewDefaultTableConvertor(schema.GroupResource{Group: v1alpha1.GroupName, Resource: "permissionbindings"}).
 		ConvertToTable(ctx, object, tableOptions)
 }
 
 func (r *PermissionBindingREST) NamespaceScoped() bool {
-	// Relationships are cluster-scoped as they manage cross-cluster permissions
+	// PermissionBindings are cluster-scoped as they manage cross-cluster permissions
 	return false
 }
 
 func (r *PermissionBindingREST) GetSingularName() string {
-	return "relationship"
+	return "permissionbinding"
 }
 
 func (r *PermissionBindingREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
 	return schema.GroupVersionKind{
 		Group:   containingGV.Group,
 		Version: containingGV.Version,
-		Kind:    "Relationship",
+		Kind:    "PermissionBinding",
 	}
 }
 
