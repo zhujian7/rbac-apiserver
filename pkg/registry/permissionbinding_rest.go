@@ -10,13 +10,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 
 	"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
+	"github.com/stolostron/rbac-apiserver/pkg/integration"
 	"github.com/stolostron/rbac-apiserver/pkg/storage"
 )
 
 type PermissionBindingREST struct {
-	storage *storage.PermissionBindingMemoryStorage
+	storage     *storage.PermissionBindingMemoryStorage
+	integration *integration.SpiceDBIntegration
 }
 
 // Ensure PermissionBindingREST implements the required interfaces
@@ -28,9 +31,10 @@ var _ rest.Scoper = &PermissionBindingREST{}
 var _ rest.Storage = &PermissionBindingREST{}
 var _ rest.GroupVersionKindProvider = &PermissionBindingREST{}
 
-func NewPermissionBindingREST() *PermissionBindingREST {
+func NewPermissionBindingREST(integration *integration.SpiceDBIntegration) *PermissionBindingREST {
 	return &PermissionBindingREST{
-		storage: storage.NewPermissionBindingMemoryStorage(),
+		storage:     storage.NewPermissionBindingMemoryStorage(),
+		integration: integration,
 	}
 }
 
@@ -57,7 +61,23 @@ func (r *PermissionBindingREST) Create(ctx context.Context, obj runtime.Object, 
 		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "PermissionBinding",
 	}
-	return r.storage.Create(permissionBinding)
+	
+	// Create in storage first
+	createdObj, err := r.storage.Create(permissionBinding)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Sync to SpiceDB
+	if r.integration != nil {
+		if err := r.integration.CreatePermissionBinding(ctx, permissionBinding); err != nil {
+			klog.Errorf("Failed to sync PermissionBinding %s to SpiceDB: %v", permissionBinding.Name, err)
+			// Note: We don't fail the creation if SpiceDB sync fails
+			// The object exists in storage, but authorization might not work correctly
+		}
+	}
+	
+	return createdObj, nil
 }
 
 func (r *PermissionBindingREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc,
@@ -68,6 +88,17 @@ func (r *PermissionBindingREST) Delete(ctx context.Context, name string, deleteV
 		return nil, false, err
 	}
 
+	permissionBinding := obj.(*v1alpha1.PermissionBinding)
+	
+	// Delete from SpiceDB first
+	if r.integration != nil {
+		if err := r.integration.DeletePermissionBinding(ctx, permissionBinding); err != nil {
+			klog.Errorf("Failed to delete PermissionBinding %s from SpiceDB: %v", name, err)
+			// Continue with storage deletion even if SpiceDB deletion fails
+		}
+	}
+	
+	// Delete from storage
 	err = r.storage.Delete(name)
 	return obj, true, err
 }

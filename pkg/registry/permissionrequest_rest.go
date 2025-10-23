@@ -10,13 +10,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 
 	"github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
+	"github.com/stolostron/rbac-apiserver/pkg/integration"
 	"github.com/stolostron/rbac-apiserver/pkg/storage"
 )
 
 type PermissionRequestREST struct {
-	storage *storage.PermissionRequestMemoryStorage
+	storage     *storage.PermissionRequestMemoryStorage
+	integration *integration.SpiceDBIntegration
 }
 
 // Ensure PermissionRequestREST implements the required interfaces
@@ -28,9 +31,10 @@ var _ rest.Scoper = &PermissionRequestREST{}
 var _ rest.Storage = &PermissionRequestREST{}
 var _ rest.GroupVersionKindProvider = &PermissionRequestREST{}
 
-func NewPermissionRequestREST() *PermissionRequestREST {
+func NewPermissionRequestREST(integration *integration.SpiceDBIntegration) *PermissionRequestREST {
 	return &PermissionRequestREST{
-		storage: storage.NewPermissionRequestMemoryStorage(),
+		storage:     storage.NewPermissionRequestMemoryStorage(),
+		integration: integration,
 	}
 }
 
@@ -57,7 +61,35 @@ func (r *PermissionRequestREST) Create(ctx context.Context, obj runtime.Object, 
 		APIVersion: v1alpha1.GroupName + "/" + v1alpha1.APIVersion,
 		Kind:       "PermissionRequest",
 	}
-	return r.storage.Create(permissionRequest)
+	
+	// Create in storage first
+	createdObj, err := r.storage.Create(permissionRequest)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Evaluate against SpiceDB and update status
+	if r.integration != nil {
+		// For now, we'll use a placeholder user ID and type
+		// In a real implementation, this would come from the request context
+		userID := "system:admin" // TODO: Extract from request context
+		userType := "user"
+		
+		if err := r.integration.ProcessPermissionRequestStatus(ctx, permissionRequest, userID, userType); err != nil {
+			klog.Errorf("Failed to process PermissionRequest %s status with SpiceDB: %v", permissionRequest.Name, err)
+			// Note: We don't fail the creation if SpiceDB evaluation fails
+			// The object exists but status might not be accurate
+		} else {
+			// Update the object in storage with the new status
+			if updatedObj, updateErr := r.storage.Update(permissionRequest); updateErr != nil {
+				klog.Errorf("Failed to update PermissionRequest %s status in storage: %v", permissionRequest.Name, updateErr)
+			} else {
+				createdObj = updatedObj
+			}
+		}
+	}
+	
+	return createdObj, nil
 }
 
 func (r *PermissionRequestREST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc,
