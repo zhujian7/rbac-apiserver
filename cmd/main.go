@@ -17,7 +17,9 @@ import (
 
 	generatedopenapi "github.com/stolostron/rbac-apiserver/apis/generated/openapi"
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
+	"github.com/stolostron/rbac-apiserver/pkg/integration"
 	"github.com/stolostron/rbac-apiserver/pkg/registry"
+	"github.com/stolostron/rbac-apiserver/pkg/spicedb"
 )
 
 var (
@@ -39,10 +41,10 @@ func init() {
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
 }
 
-func installAPI(s *genericapiserver.GenericAPIServer) error {
+func installAPI(s *genericapiserver.GenericAPIServer, spiceDBIntegration *integration.SpiceDBIntegration) error {
 	// Install RBAC API (authorization.open-cluster-management.io/v1alpha1)
-	permissionBindingREST := registry.NewPermissionBindingREST()
-	permissionRequestREST := registry.NewPermissionRequestREST()
+	permissionBindingREST := registry.NewPermissionBindingREST(spiceDBIntegration)
+	permissionRequestREST := registry.NewPermissionRequestREST(spiceDBIntegration)
 
 	rbacStorage := map[string]rest.Storage{
 		"permissionbindings": permissionBindingREST,
@@ -56,21 +58,49 @@ func installAPI(s *genericapiserver.GenericAPIServer) error {
 }
 
 type Config struct {
-	GenericConfig *genericapiserver.RecommendedConfig
+	GenericConfig       *genericapiserver.RecommendedConfig
+	SpiceDB             *spicedb.EmbeddedSpiceDB
+	SpiceDBIntegration  *integration.SpiceDBIntegration
 }
 
 type MyAPIServer struct {
-	GenericAPIServer *genericapiserver.GenericAPIServer
+	GenericAPIServer   *genericapiserver.GenericAPIServer
+	SpiceDB            *spicedb.EmbeddedSpiceDB
+	SpiceDBIntegration *integration.SpiceDBIntegration
 }
 
 func (s *MyAPIServer) Run(ctx context.Context) error {
+	defer func() {
+		if s.SpiceDB != nil {
+			if err := s.SpiceDB.Close(); err != nil {
+				klog.Errorf("Error closing SpiceDB: %v", err)
+			}
+		}
+	}()
 	return s.GenericAPIServer.PrepareRun().RunWithContext(ctx)
 }
 
-func NewConfig() *Config {
-	return &Config{
-		GenericConfig: genericapiserver.NewRecommendedConfig(Codecs),
+func NewConfig(ctx context.Context) (*Config, error) {
+	// Initialize embedded SpiceDB
+	embeddedSpiceDB, err := spicedb.NewEmbeddedSpiceDB(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	// Initialize the global SpiceDB manager
+	manager := spicedb.GetManager()
+	if err := manager.Initialize(ctx, embeddedSpiceDB); err != nil {
+		return nil, err
+	}
+
+	// Create SpiceDB integration service
+	spiceDBIntegration := integration.NewSpiceDBIntegration(manager)
+
+	return &Config{
+		GenericConfig:      genericapiserver.NewRecommendedConfig(Codecs),
+		SpiceDB:            embeddedSpiceDB,
+		SpiceDBIntegration: spiceDBIntegration,
+	}, nil
 }
 
 func (c *Config) Complete() *Config {
@@ -93,10 +123,12 @@ func (c *Config) New() (*MyAPIServer, error) {
 	}
 
 	s := &MyAPIServer{
-		GenericAPIServer: genericServer,
+		GenericAPIServer:   genericServer,
+		SpiceDB:            c.SpiceDB,
+		SpiceDBIntegration: c.SpiceDBIntegration,
 	}
 
-	if err := installAPI(s.GenericAPIServer); err != nil {
+	if err := installAPI(s.GenericAPIServer, s.SpiceDBIntegration); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +155,11 @@ func main() {
 		klog.Errorf("Error validating options: %v", errs)
 	}
 
-	config := NewConfig()
+	ctx := context.Background()
+	config, err := NewConfig(ctx)
+	if err != nil {
+		klog.Fatalf("Error creating config: %v", err)
+	}
 	if err := options.ApplyTo(config.GenericConfig); err != nil {
 		klog.Fatalf("Error applying options: %v", err)
 	}
@@ -135,8 +171,7 @@ func main() {
 		klog.Fatalf("Error creating server: %v", err)
 	}
 
-	ctx := context.Background()
-	klog.Infof("Starting my-apiserver...")
+	klog.Infof("Starting rbac-apiserver with embedded SpiceDB...")
 	if err := server.Run(ctx); err != nil {
 		klog.Fatalf("Error running server: %v", err)
 	}
