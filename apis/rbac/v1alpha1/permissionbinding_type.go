@@ -13,11 +13,11 @@ type PermissionBinding struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Spec defines the relationship tuples to create or delete
+	// Spec defines the permission bindings
 	Spec PermissionBindingSpec `json:"spec,omitempty"`
 }
 
-// RelationshipSpec defines the desired relationship tuples
+// PermissionBindingSpec defines the desired permission bindings
 type PermissionBindingSpec struct {
 	// Subject identifies the entity that has the permissions
 	Subject rbacv1.Subject `json:"subject"`
@@ -59,6 +59,6 @@ type PermissionBindingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// Items is the list of Relationship objects
+	// Items is the list of PermissionBinding objects
 	Items []PermissionBinding `json:"items"`
 }
