@@ -22,7 +22,7 @@ func TestEmbeddedSpiceDB(t *testing.T) {
 
 	// Test that the structure is created properly
 	require.NotNil(t, embeddedDB, "EmbeddedSpiceDB should not be nil")
-	
+
 	// Initialize manager
 	manager := GetManager()
 	err = manager.Initialize(ctx, embeddedDB)
@@ -76,7 +76,7 @@ func TestSpiceDBSchema(t *testing.T) {
 	// Test that schema client is available
 	schemaClient := manager.SchemaClient()
 	require.NotNil(t, schemaClient, "Schema client should not be nil")
-	
+
 	// For now, just test that the client exists
 	// The actual schema operations may fail until services are properly registered
 }
@@ -100,7 +100,7 @@ func TestSpiceDBNamespaceHierarchy(t *testing.T) {
 	// Test that permissions client is available
 	permClient := manager.PermissionsClient()
 	require.NotNil(t, permClient, "Permissions client should not be nil")
-	
+
 	// For now, just test that the client exists
 	// The actual permission operations may fail until services are properly registered
 }

@@ -109,11 +109,11 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			By("Verifying all permissions were stored correctly")
 			permissions := result.Spec.Permissions
 			Expect(len(permissions)).To(Equal(2))
-			
+
 			// Verify first permission
 			Expect(permissions[0].Role).To(Equal("viewer"))
 			Expect(permissions[0].Resources).To(ContainElements("pods", "services"))
-			
+
 			// Verify second permission
 			Expect(permissions[1].Role).To(Equal("editor"))
 			Expect(permissions[1].Resources).To(ContainElements("deployments"))
@@ -248,7 +248,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 
 			for i, tc := range testCases {
 				By(fmt.Sprintf("Testing verb '%s' on resource '%s' (case %d)", tc.verb, tc.resource, i+1))
-				
+
 				prName := fmt.Sprintf("%s-%d", permissionRequestName, i)
 				permissionRequest := &rbacv1alpha1.PermissionRequest{
 					ObjectMeta: metav1.ObjectMeta{
@@ -450,7 +450,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 	Describe("Error Handling and Edge Cases", func() {
 		It("should handle empty permission lists gracefully", func() {
 			permissionBindingName := fmt.Sprintf("%s-empty", testNamePrefix)
-			
+
 			By("Creating a PermissionBinding with empty permissions")
 			permissionBinding := &rbacv1alpha1.PermissionBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -475,7 +475,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 
 		It("should handle wildcard permissions", func() {
 			permissionBindingName := fmt.Sprintf("%s-wildcard", testNamePrefix)
-			
+
 			By("Creating a PermissionBinding with wildcard permissions")
 			permissionBinding := &rbacv1alpha1.PermissionBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -501,7 +501,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 
 			result, err := rbacClient.AuthorizationV1alpha1().PermissionBindings().Create(ctx, permissionBinding, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Should allow creating PermissionBinding with wildcard permissions")
-			
+
 			permission := result.Spec.Permissions[0]
 			Expect(permission.Resources).To(ContainElement("*"))
 			Expect(permission.Groups).To(ContainElement("*"))
