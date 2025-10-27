@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server
+  namespace: auth-server-system
+spec:
+  selector:
+    app: auth-server
+  ports:
+  - port: 443
+    targetPort: 8443
+    protocol: TCP
+    name: https
+  type: ClusterIP

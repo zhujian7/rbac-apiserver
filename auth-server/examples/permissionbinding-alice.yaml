@@ -1,0 +1,24 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: alice-admin-permissions
+spec:
+  subject:
+    kind: User
+    name: alice
+  permissions:
+  # Allow alice to admin pods, deployments, and services in default namespace
+  - resources: ["pods", "deployments", "services"]
+    groups: ["", "apps"]
+    namespaces: ["default"]
+    names: ["*"]
+    role: "admin"
+    clusters: ["managed-cluster"]
+
+  # Allow alice to view all resources in kube-system
+  - resources: ["*"]
+    groups: ["*"]
+    namespaces: ["kube-system"]
+    names: ["*"]
+    role: "viewer"
+    clusters: ["managed-cluster"]
