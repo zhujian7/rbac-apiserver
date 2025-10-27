@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server
+  namespace: auth-server-system
+  labels:
+    app: auth-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-server
+  template:
+    metadata:
+      labels:
+        app: auth-server
+    spec:
+      serviceAccountName: auth-server
+      containers:
+      - name: auth-server
+        image: quay.io/stolostron/auth-server:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - --cluster-name=$(CLUSTER_NAME)
+        - --hub-kubeconfig=/etc/hub/kubeconfig
+        - --tls-cert-file=/etc/certs/tls.crt
+        - --tls-key-file=/etc/certs/tls.key
+        - --v=4
+        env:
+        - name: CLUSTER_NAME
+          value: "managed-cluster"
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        volumeMounts:
+        - name: hub-kubeconfig
+          mountPath: /etc/hub
+          readOnly: true
+        - name: certs
+          mountPath: /etc/certs
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      volumes:
+      - name: hub-kubeconfig
+        secret:
+          secretName: hub-kubeconfig
+      - name: certs
+        secret:
+          secretName: auth-server-certs

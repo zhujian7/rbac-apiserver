@@ -1,0 +1,28 @@
+# This file should be placed on the managed cluster at:
+# /etc/kubernetes/authz-webhook/config.yaml
+#
+# Then add to kube-apiserver:
+# --authorization-mode=Node,RBAC,Webhook
+# --authorization-webhook-config-file=/etc/kubernetes/authz-webhook/config.yaml
+# --authorization-webhook-cache-authorized-ttl=5m
+# --authorization-webhook-cache-unauthorized-ttl=30s
+
+apiVersion: v1
+kind: Config
+clusters:
+- name: auth-server
+  cluster:
+    # For Kind clusters, you can use insecure-skip-tls-verify for testing
+    insecure-skip-tls-verify: true
+    server: https://auth-server.auth-server-system.svc.cluster.local/authorize
+users:
+- name: kube-apiserver
+  user:
+    # For Kind, the apiserver can use its own certificate
+    # In production, use proper client certificates
+current-context: webhook
+contexts:
+- context:
+    cluster: auth-server
+    user: kube-apiserver
+  name: webhook

@@ -1,0 +1,16 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: bob-viewer-permissions
+spec:
+  subject:
+    kind: User
+    name: bob
+  permissions:
+  # Allow bob to view pods in default namespace only
+  - resources: ["pods"]
+    groups: [""]
+    namespaces: ["default"]
+    names: ["*"]
+    role: "viewer"
+    clusters: ["managed-cluster"]
