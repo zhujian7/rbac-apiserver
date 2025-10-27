@@ -8,21 +8,20 @@ import (
 	"k8s.io/klog/v2"
 
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
-	"github.com/stolostron/rbac-apiserver/pkg/spicedb"
 	"github.com/stolostron/rbac-apiserver/pkg/transformer"
 )
 
 // SpiceDBIntegration handles the integration between RBAC API resources and SpiceDB
 type SpiceDBIntegration struct {
-	transformer *transformer.SpiceDBTransformer
-	manager     *spicedb.Manager
+	transformer       *transformer.SpiceDBTransformer
+	permissionsClient v1.PermissionsServiceClient
 }
 
 // NewSpiceDBIntegration creates a new SpiceDB integration service
-func NewSpiceDBIntegration(manager *spicedb.Manager) *SpiceDBIntegration {
+func NewSpiceDBIntegration(permissionsClient v1.PermissionsServiceClient) *SpiceDBIntegration {
 	return &SpiceDBIntegration{
-		transformer: transformer.NewSpiceDBTransformer(),
-		manager:     manager,
+		transformer:       transformer.NewSpiceDBTransformer(),
+		permissionsClient: permissionsClient,
 	}
 }
 
@@ -185,17 +184,12 @@ func (s *SpiceDBIntegration) writeRelationships(ctx context.Context, updates []*
 		return nil
 	}
 
-	permissionsClient := s.manager.PermissionsClient()
-	if permissionsClient == nil {
-		return fmt.Errorf("permissions client not available")
-	}
-
 	// Write relationships using WriteRelationships
 	req := &v1.WriteRelationshipsRequest{
 		Updates: updates,
 	}
 
-	_, err := permissionsClient.WriteRelationships(ctx, req)
+	_, err := s.permissionsClient.WriteRelationships(ctx, req)
 	if err != nil {
 		return fmt.Errorf("failed to write relationships: %w", err)
 	}
@@ -205,12 +199,8 @@ func (s *SpiceDBIntegration) writeRelationships(ctx context.Context, updates []*
 
 // checkPermission checks a permission in SpiceDB
 func (s *SpiceDBIntegration) checkPermission(ctx context.Context, checkReq *v1.CheckPermissionRequest) (*v1.CheckPermissionResponse, error) {
-	permissionsClient := s.manager.PermissionsClient()
-	if permissionsClient == nil {
-		return nil, fmt.Errorf("permissions client not available")
-	}
 
-	response, err := permissionsClient.CheckPermission(ctx, checkReq)
+	response, err := s.permissionsClient.CheckPermission(ctx, checkReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check permission: %w", err)
 	}
@@ -220,13 +210,9 @@ func (s *SpiceDBIntegration) checkPermission(ctx context.Context, checkReq *v1.C
 
 // HealthCheck verifies that SpiceDB integration is healthy
 func (s *SpiceDBIntegration) HealthCheck(ctx context.Context) error {
-	// Check if manager is available
-	if s.manager == nil {
-		return fmt.Errorf("SpiceDB manager not available")
-	}
 
 	// Check if clients are available
-	if s.manager.PermissionsClient() == nil {
+	if s.permissionsClient == nil {
 		return fmt.Errorf("SpiceDB permissions client not available")
 	}
 

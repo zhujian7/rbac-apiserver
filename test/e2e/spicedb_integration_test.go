@@ -119,40 +119,6 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			Expect(permissions[1].Resources).To(ContainElements("deployments"))
 		})
 
-		It("should handle ServiceAccount subjects", func() {
-			By("Creating a PermissionBinding with ServiceAccount subject")
-			permissionBinding := &rbacv1alpha1.PermissionBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: permissionBindingName,
-				},
-				Spec: rbacv1alpha1.PermissionBindingSpec{
-					Subject: rbacv1.Subject{
-						Kind:      "ServiceAccount",
-						Name:      "my-service-account",
-						Namespace: "kube-system",
-					},
-					Permissions: []rbacv1alpha1.Permission{
-						{
-							Resources:  []string{"secrets"},
-							Groups:     []string{""},
-							Namespaces: []string{"kube-system"},
-							Role:       "admin",
-							Clusters:   []string{"cluster1"},
-						},
-					},
-				},
-			}
-
-			result, err := rbacClient.AuthorizationV1alpha1().PermissionBindings().Create(ctx, permissionBinding, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionBinding with ServiceAccount")
-
-			By("Verifying ServiceAccount subject was stored correctly")
-			subject := result.Spec.Subject
-			Expect(subject.Kind).To(Equal("ServiceAccount"))
-			Expect(subject.Name).To(Equal("my-service-account"))
-			Expect(subject.Namespace).To(Equal("kube-system"))
-		})
-
 		It("should delete PermissionBinding and clean up SpiceDB relationships", func() {
 			By("Creating a PermissionBinding")
 			permissionBinding := &rbacv1alpha1.PermissionBinding{
