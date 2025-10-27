@@ -11,5 +11,8 @@ spec:
     targetPort: https
     protocol: TCP
     name: https
+  - port: 50051
+    protocol: TCP
+    name: grpc
   selector:
     {{- include "rbac-apiserver.selectorLabels" . | nindent 4 }}

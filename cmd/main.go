@@ -75,6 +75,11 @@ func (s *MyAPIServer) Run(ctx context.Context) error {
 			}
 		}
 	}()
+
+	go func() error {
+		return s.SpiceDB.Server.Run(ctx)
+	}()
+
 	return s.GenericAPIServer.PrepareRun().RunWithContext(ctx)
 }
 

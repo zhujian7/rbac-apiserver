@@ -43,7 +43,7 @@ func TestNewEmbeddedSpiceDB(t *testing.T) {
 			require.NotNil(t, spiceDB)
 
 			// Verify the embedded SpiceDB instance is properly initialized
-			assert.NotNil(t, spiceDB.server, "Server should not be nil")
+			assert.NotNil(t, spiceDB.Server, "Server should not be nil")
 			assert.NotNil(t, spiceDB.conn, "gRPC connection should not be nil")
 			assert.NotNil(t, spiceDB.PermissionsClient, "Permissions client should not be nil")
 			assert.NotNil(t, spiceDB.SchemaClient, "Schema client should not be nil")
