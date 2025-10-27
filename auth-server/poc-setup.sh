@@ -198,22 +198,37 @@ stringData:
         token: ${HUB_TOKEN}
 EOF
 
-    # Generate self-signed certs for auth-server
-    echo_info "Generating TLS certificates for auth-server..."
-    openssl req -x509 -newkey rsa:2048 -nodes \
-        -keyout /tmp/tls.key \
-        -out /tmp/tls.crt \
-        -days 365 \
-        -subj "/CN=auth-server.auth-server-system.svc" \
-        -addext "subjectAltName=DNS:auth-server.auth-server-system.svc,DNS:auth-server.auth-server-system.svc.cluster.local"
+    # Deploy auth-server service first (needed to get ClusterIP)
+    echo_info "Deploying auth-server service..."
+    kubectl apply -f auth-server/manifests/service.yaml
+
+    # Generate TLS certificates signed by cluster CA
+    echo_info "Generating TLS certificates for auth-server signed by cluster CA..."
+    AUTH_SERVER_IP=$(kubectl get svc auth-server -n auth-server-system -o jsonpath='{.spec.clusterIP}')
+
+    # Generate certificate inside the managed cluster control plane using the cluster CA
+    podman exec managed-control-plane bash -c "
+    cd /etc/kubernetes/pki
+    openssl genrsa -out auth-server.key 2048
+    openssl req -new -key auth-server.key -out auth-server.csr \
+      -subj '/CN=auth-server.auth-server-system.svc' \
+      -addext 'subjectAltName=DNS:auth-server.auth-server-system.svc,DNS:auth-server.auth-server-system.svc.cluster.local,IP:${AUTH_SERVER_IP}'
+    openssl x509 -req -in auth-server.csr \
+      -CA ca.crt -CAkey ca.key -CAcreateserial \
+      -out auth-server.crt -days 365 \
+      -extensions v3_req -extfile <(printf '[v3_req]\nsubjectAltName=DNS:auth-server.auth-server-system.svc,DNS:auth-server.auth-server-system.svc.cluster.local,IP:${AUTH_SERVER_IP}')
+    " > /dev/null 2>&1
+
+    # Extract the cert and key from the container
+    podman exec managed-control-plane cat /etc/kubernetes/pki/auth-server.crt > /tmp/auth-server.crt
+    podman exec managed-control-plane cat /etc/kubernetes/pki/auth-server.key > /tmp/auth-server.key
 
     kubectl create secret tls auth-server-certs \
-        --cert=/tmp/tls.crt \
-        --key=/tmp/tls.key \
+        --cert=/tmp/auth-server.crt \
+        --key=/tmp/auth-server.key \
         -n auth-server-system
 
-    # Deploy auth-server
-    kubectl apply -f auth-server/manifests/service.yaml
+    # Deploy auth-server deployment
     kubectl apply -f auth-server/manifests/deployment.yaml
 
     # Wait for deployment
@@ -231,14 +246,14 @@ configure_webhook() {
     # Get auth-server service ClusterIP
     AUTH_SERVER_IP=$(kubectl get svc auth-server -n auth-server-system -o jsonpath='{.spec.clusterIP}')
 
-    # Create webhook config file
+    # Create webhook config file that uses cluster CA for verification
     cat > /tmp/webhook-config.yaml <<EOF
 apiVersion: v1
 kind: Config
 clusters:
 - name: auth-server
   cluster:
-    insecure-skip-tls-verify: true
+    certificate-authority: /etc/kubernetes/pki/ca.crt
     server: https://${AUTH_SERVER_IP}:443/authorize
 users:
 - name: auth-server
@@ -250,10 +265,9 @@ contexts:
 current-context: webhook
 EOF
 
-    # Copy webhook config and TLS cert to control plane
+    # Copy webhook config to control plane
     echo_info "Copying webhook config to managed cluster control plane..."
     podman cp /tmp/webhook-config.yaml managed-control-plane:/etc/kubernetes/pki/webhook-config.yaml
-    podman cp /tmp/tls.crt managed-control-plane:/etc/kubernetes/pki/auth-server-ca.crt
 
     # Update kube-apiserver to use webhook authorization
     echo_info "Updating kube-apiserver to enable webhook authorization..."
