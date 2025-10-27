@@ -87,14 +87,6 @@ func (t *SpiceDBTransformer) convertSubject(subject *rbacv1.Subject) (*v1.Subjec
 	case "Group":
 		objectType = "group"
 		objectID = subject.Name
-	case "ServiceAccount":
-		objectType = "serviceaccount"
-		// Include namespace for service accounts
-		if subject.Namespace != "" {
-			objectID = fmt.Sprintf("%s:%s", subject.Namespace, subject.Name)
-		} else {
-			objectID = subject.Name
-		}
 	default:
 		return nil, fmt.Errorf("unsupported subject kind: %s", subject.Kind)
 	}

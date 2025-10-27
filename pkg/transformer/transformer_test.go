@@ -94,40 +94,6 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 			},
 		},
 		{
-			name: "service account permission binding",
-			permissionBinding: &rbacv1alpha1.PermissionBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "sa-binding",
-				},
-				Spec: rbacv1alpha1.PermissionBindingSpec{
-					Subject: rbacv1.Subject{
-						Kind:      "ServiceAccount",
-						Name:      "my-sa",
-						Namespace: "default",
-					},
-					Permissions: []rbacv1alpha1.Permission{
-						{
-							Role:       "editor",
-							Clusters:   []string{"cluster1"},
-							Namespaces: []string{"default"},
-							Resources:  []string{"configmaps"},
-							Names:      []string{"config1"},
-						},
-					},
-				},
-			},
-			expectedCount: 1,
-			expectError:   false,
-			validateFunc: func(t *testing.T, updates []*v1.RelationshipUpdate) {
-				require.Len(t, updates, 1)
-				update := updates[0]
-
-				assert.Equal(t, "serviceaccount", update.Relationship.Subject.Object.ObjectType)
-				assert.Equal(t, "default:my-sa", update.Relationship.Subject.Object.ObjectId)
-				assert.Equal(t, "editor", update.Relationship.Relation)
-			},
-		},
-		{
 			name: "wildcard permissions",
 			permissionBinding: &rbacv1alpha1.PermissionBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -432,35 +398,6 @@ func TestSpiceDBTransformer_ConvertSubject(t *testing.T) {
 				Object: &v1.ObjectReference{
 					ObjectType: "group",
 					ObjectId:   "developers",
-				},
-			},
-		},
-		{
-			name: "service account with namespace",
-			subject: &rbacv1.Subject{
-				Kind:      "ServiceAccount",
-				Name:      "my-sa",
-				Namespace: "default",
-			},
-			expectError: false,
-			expectedRef: &v1.SubjectReference{
-				Object: &v1.ObjectReference{
-					ObjectType: "serviceaccount",
-					ObjectId:   "default:my-sa",
-				},
-			},
-		},
-		{
-			name: "service account without namespace",
-			subject: &rbacv1.Subject{
-				Kind: "ServiceAccount",
-				Name: "my-sa",
-			},
-			expectError: false,
-			expectedRef: &v1.SubjectReference{
-				Object: &v1.ObjectReference{
-					ObjectType: "serviceaccount",
-					ObjectId:   "my-sa",
 				},
 			},
 		},

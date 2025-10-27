@@ -58,9 +58,7 @@ func installAPI(s *genericapiserver.GenericAPIServer, spiceDBIntegration *integr
 }
 
 type Config struct {
-	GenericConfig      *genericapiserver.RecommendedConfig
-	SpiceDB            *spicedb.EmbeddedSpiceDB
-	SpiceDBIntegration *integration.SpiceDBIntegration
+	GenericConfig *genericapiserver.RecommendedConfig
 }
 
 type MyAPIServer struct {
@@ -81,25 +79,8 @@ func (s *MyAPIServer) Run(ctx context.Context) error {
 }
 
 func NewConfig(ctx context.Context) (*Config, error) {
-	// Initialize embedded SpiceDB
-	embeddedSpiceDB, err := spicedb.NewEmbeddedSpiceDB(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize the global SpiceDB manager
-	manager := spicedb.GetManager()
-	if err := manager.Initialize(ctx, embeddedSpiceDB); err != nil {
-		return nil, err
-	}
-
-	// Create SpiceDB integration service
-	spiceDBIntegration := integration.NewSpiceDBIntegration(manager)
-
 	return &Config{
-		GenericConfig:      genericapiserver.NewRecommendedConfig(Codecs),
-		SpiceDB:            embeddedSpiceDB,
-		SpiceDBIntegration: spiceDBIntegration,
+		GenericConfig: genericapiserver.NewRecommendedConfig(Codecs),
 	}, nil
 }
 
@@ -116,7 +97,13 @@ func (c *Config) Complete() *Config {
 	return c
 }
 
-func (c *Config) New() (*MyAPIServer, error) {
+func (c *Config) New(ctx context.Context) (*MyAPIServer, error) {
+
+	spicedb, err := spicedb.NewEmbeddedSpiceDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	genericServer, err := c.GenericConfig.Complete().New("my-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return nil, err
@@ -124,8 +111,8 @@ func (c *Config) New() (*MyAPIServer, error) {
 
 	s := &MyAPIServer{
 		GenericAPIServer:   genericServer,
-		SpiceDB:            c.SpiceDB,
-		SpiceDBIntegration: c.SpiceDBIntegration,
+		SpiceDB:            spicedb,
+		SpiceDBIntegration: integration.NewSpiceDBIntegration(spicedb.PermissionsClient),
 	}
 
 	if err := installAPI(s.GenericAPIServer, s.SpiceDBIntegration); err != nil {
@@ -166,7 +153,7 @@ func main() {
 
 	config = config.Complete()
 
-	server, err := config.New()
+	server, err := config.New(ctx)
 	if err != nil {
 		klog.Fatalf("Error creating server: %v", err)
 	}
