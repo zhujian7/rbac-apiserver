@@ -21,7 +21,7 @@ var bootstrap []byte
 
 // EmbeddedSpiceDB manages an embedded SpiceDB instance
 type EmbeddedSpiceDB struct {
-	server            server.RunnableServer
+	Server            server.RunnableServer
 	conn              *grpc.ClientConn
 	PermissionsClient v1.PermissionsServiceClient
 	SchemaClient      v1.SchemaServiceClient
@@ -41,7 +41,7 @@ func NewEmbeddedSpiceDB(ctx context.Context) (*EmbeddedSpiceDB, error) {
 	}
 
 	return &EmbeddedSpiceDB{
-		server:            spiceDBServer,
+		Server:            spiceDBServer,
 		conn:              conn,
 		PermissionsClient: v1.NewPermissionsServiceClient(conn),
 		SchemaClient:      v1.NewSchemaServiceClient(conn),
