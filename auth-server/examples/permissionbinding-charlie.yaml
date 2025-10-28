@@ -1,0 +1,17 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: charlie-other-cluster-permissions
+spec:
+  subject:
+    kind: User
+    name: charlie
+  permissions:
+  # Charlie has permissions on a different cluster, not "managed-cluster"
+  # This will cause auth-server to return NoOpinion for requests to "managed-cluster"
+  - resources: ["pods"]
+    groups: [""]
+    namespaces: ["default"]
+    names: ["*"]
+    role: "admin"
+    clusters: ["other-cluster"]
