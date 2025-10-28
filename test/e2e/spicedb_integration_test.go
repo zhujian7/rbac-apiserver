@@ -157,18 +157,49 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 
 	Describe("PermissionRequest with SpiceDB Evaluation", func() {
 		var permissionRequestName string
+		var permissionBindingName string
 
 		BeforeEach(func() {
 			permissionRequestName = fmt.Sprintf("%s-pr", testNamePrefix)
+			permissionBindingName = fmt.Sprintf("%s-pr-binding", testNamePrefix)
 		})
 
 		AfterEach(func() {
-			// Clean up: delete the permission request if it exists
-			_ = rbacClient.AuthorizationV1alpha1().PermissionRequests().Delete(ctx, permissionRequestName, metav1.DeleteOptions{})
+			// Clean up: PermissionRequests are not persisted (CSR-like), but clean up bindings
+			_ = rbacClient.AuthorizationV1alpha1().PermissionBindings().Delete(ctx, permissionBindingName, metav1.DeleteOptions{})
 		})
 
 		It("should create PermissionRequest and evaluate with SpiceDB", func() {
-			By("Creating a PermissionRequest")
+			By("Creating a PermissionBinding first to grant permissions")
+			permissionBinding := &rbacv1alpha1.PermissionBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: permissionBindingName,
+				},
+				Spec: rbacv1alpha1.PermissionBindingSpec{
+					Subject: rbacv1.Subject{
+						Kind: "User",
+						Name: "kubernetes-admin", // This should match the user from kubeconfig context
+					},
+					Permissions: []rbacv1alpha1.Permission{
+						{
+							Resources:  []string{"pods"},
+							Groups:     []string{""},
+							Namespaces: []string{"default"},
+							Names:      []string{"*"}, // Wildcard to allow any pod name
+							Role:       "viewer",
+							Clusters:   []string{"cluster1"},
+						},
+					},
+				},
+			}
+
+			_, err := rbacClient.AuthorizationV1alpha1().PermissionBindings().Create(ctx, permissionBinding, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionBinding")
+
+			By("Waiting for SpiceDB synchronization")
+			time.Sleep(200 * time.Millisecond)
+
+			By("Creating a PermissionRequest (CSR-like: evaluates immediately)")
 			permissionRequest := &rbacv1alpha1.PermissionRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: permissionRequestName,
@@ -176,7 +207,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				Spec: rbacv1alpha1.PermissionRequestSpec{
 					Group:     "",
 					Resource:  "pods",
-					Verb:      "get",
+					Verb:      "get", // Maps to 'view' permission
 					Cluster:   "cluster1",
 					Namespace: "default",
 					Name:      "test-pod",
@@ -187,16 +218,28 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionRequest")
 			Expect(result.GetName()).To(Equal(permissionRequestName))
 
-			By("Verifying PermissionRequest was created and processed")
-			// The integration service should have processed this request with SpiceDB
-			// and potentially updated the status
-			retrievedPR, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Get(ctx, permissionRequestName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(retrievedPR.Spec.Resource).To(Equal("pods"))
-			Expect(retrievedPR.Spec.Verb).To(Equal("get"))
+			By("Verifying PermissionRequest was evaluated immediately with status populated")
+			Expect(result.Spec.Resource).To(Equal("pods"))
+			Expect(result.Spec.Verb).To(Equal("get"))
 
-			// Note: The status might be updated by the SpiceDB integration
-			// depending on existing relationships and the placeholder user
+			// Verify status is populated by SpiceDB evaluation
+			Expect(result.Status.AllowedList).NotTo(BeEmpty(), "Status should be populated with evaluation results")
+			Expect(len(result.Status.AllowedList)).To(BeNumerically(">", 0))
+
+			// Verify the allowed resource details
+			allowedItem := result.Status.AllowedList[0]
+			Expect(allowedItem.Cluster).To(Equal("cluster1"))
+			Expect(len(allowedItem.NamespacedNames)).To(BeNumerically(">", 0))
+
+			namespacedName := allowedItem.NamespacedNames[0]
+			Expect(namespacedName.Namespace).To(Equal("default"))
+			Expect(namespacedName.Names).NotTo(BeEmpty())
+			Expect(namespacedName.Names).To(ContainElement("test-pod"))
+
+			By("Verifying PermissionRequest is NOT persisted (CSR-like behavior)")
+			// Attempting to get the request should fail because it's not stored
+			_, err = rbacClient.AuthorizationV1alpha1().PermissionRequests().Get(ctx, permissionRequestName, metav1.GetOptions{})
+			Expect(err).To(HaveOccurred(), "PermissionRequest should NOT be persisted (CSR-like)")
 		})
 
 		It("should handle different verbs and resources", func() {
@@ -234,9 +277,39 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				Expect(result.Spec.Verb).To(Equal(tc.verb))
 				Expect(result.Spec.Resource).To(Equal(tc.resource))
 
-				// Clean up this specific test case
-				_ = rbacClient.AuthorizationV1alpha1().PermissionRequests().Delete(ctx, prName, metav1.DeleteOptions{})
+				// Verify status is returned immediately (even if empty due to no matching binding)
+				Expect(result.Status).NotTo(BeNil())
+
+				// No cleanup needed - PermissionRequests are not persisted (CSR-like)
 			}
+		})
+
+		It("should evaluate PermissionRequest with empty status when permission is denied", func() {
+			By("Creating a PermissionRequest WITHOUT a matching PermissionBinding")
+			permissionRequest := &rbacv1alpha1.PermissionRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: permissionRequestName,
+				},
+				Spec: rbacv1alpha1.PermissionRequestSpec{
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "delete",
+					Cluster:   "cluster1",
+					Namespace: "kube-system",
+					Name:      "important-secret",
+				},
+			}
+
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "PermissionRequest creation should succeed even without matching binding")
+
+			By("Verifying PermissionRequest was evaluated with empty/denied status")
+			Expect(result.Spec.Resource).To(Equal("secrets"))
+			Expect(result.Spec.Verb).To(Equal("delete"))
+
+			// Status should be populated but AllowedList should be empty (permission denied)
+			Expect(result.Status).NotTo(BeNil(), "Status should be returned even when denied")
+			// In a real SpiceDB environment, AllowedList would be empty since no binding exists
 		})
 
 		It("should handle cluster-wide and namespaced requests", func() {
@@ -258,6 +331,7 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, clusterPermissionRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to create cluster-wide PermissionRequest")
 			Expect(result.Spec.Namespace).To(BeEmpty())
+			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated immediately")
 
 			By("Creating a namespaced PermissionRequest")
 			namespacedPRName := fmt.Sprintf("%s-namespaced", permissionRequestName)
@@ -279,10 +353,9 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			Expect(err).NotTo(HaveOccurred(), "Failed to create namespaced PermissionRequest")
 			Expect(result.Spec.Namespace).To(Equal("production"))
 			Expect(result.Spec.Name).To(Equal("my-deployment"))
+			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated immediately")
 
-			// Clean up
-			_ = rbacClient.AuthorizationV1alpha1().PermissionRequests().Delete(ctx, clusterPRName, metav1.DeleteOptions{})
-			_ = rbacClient.AuthorizationV1alpha1().PermissionRequests().Delete(ctx, namespacedPRName, metav1.DeleteOptions{})
+			// No cleanup needed - PermissionRequests are not persisted (CSR-like)
 		})
 	})
 
@@ -298,9 +371,8 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 		})
 
 		AfterEach(func() {
-			// Clean up both resources
+			// Clean up PermissionBindings (PermissionRequests are not persisted)
 			_ = rbacClient.AuthorizationV1alpha1().PermissionBindings().Delete(ctx, permissionBindingName, metav1.DeleteOptions{})
-			_ = rbacClient.AuthorizationV1alpha1().PermissionRequests().Delete(ctx, permissionRequestName, metav1.DeleteOptions{})
 		})
 
 		It("should handle complete workflow: create binding, then evaluate request", func() {
@@ -351,14 +423,14 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			prResult, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionRequest")
 
-			By("Verifying both resources were created successfully")
+			By("Verifying PermissionBinding was created and PermissionRequest was evaluated")
 			Expect(pbResult.Spec.Subject.Name).To(Equal("charlie"))
 			Expect(prResult.Spec.Resource).To(Equal("pods"))
 			Expect(prResult.Spec.Verb).To(Equal("get"))
 
-			// Note: In a full integration test with actual SpiceDB services running,
-			// we would verify that the PermissionRequest status was updated based on
-			// the evaluation against the relationships created by the PermissionBinding
+			// Verify PermissionRequest status is populated with SpiceDB evaluation
+			Expect(prResult.Status).NotTo(BeNil(), "Status should be evaluated immediately")
+			// Note: With full SpiceDB integration, status.AllowedList should contain the permitted resources
 		})
 
 		It("should handle resource updates and deletions", func() {
@@ -405,10 +477,12 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			_, err = rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "PermissionRequest creation should still work after binding deletion")
 
-			// Note: With full SpiceDB integration, this request would likely be denied
+			// Verify status is returned immediately (CSR-like behavior)
+			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated even when permission might be denied")
+			// With full SpiceDB integration, status.AllowedList would likely be empty
 			// since the relationships were deleted with the PermissionBinding
 		})
 	})

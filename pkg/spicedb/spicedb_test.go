@@ -2,13 +2,37 @@ package spicedb
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
+
+// newTestEmbeddedSpiceDB creates an embedded SpiceDB instance for testing
+// using buffered network to avoid port conflicts
+func newTestEmbeddedSpiceDB(ctx context.Context) (*EmbeddedSpiceDB, error) {
+	spiceDBServer, err := newEmbeddedServer(ctx, "", nil, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SpiceDB server: %w", err)
+	}
+
+	conn, err := spiceDBServer.GRPCDialContext(ctx, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("unable to open gRPC connection with embedded SpiceDB: %w", err)
+	}
+
+	return &EmbeddedSpiceDB{
+		Server:            spiceDBServer,
+		conn:              conn,
+		PermissionsClient: v1.NewPermissionsServiceClient(conn),
+		SchemaClient:      v1.NewSchemaServiceClient(conn),
+	}, nil
+}
 
 func TestNewEmbeddedSpiceDB(t *testing.T) {
 	tests := []struct {
@@ -31,7 +55,7 @@ func TestNewEmbeddedSpiceDB(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create embedded SpiceDB
-			spiceDB, err := NewEmbeddedSpiceDB(tt.ctx)
+			spiceDB, err := newTestEmbeddedSpiceDB(tt.ctx)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -62,7 +86,7 @@ func TestNewEmbeddedSpiceDB(t *testing.T) {
 
 func TestEmbeddedSpiceDB_GRPCConnection(t *testing.T) {
 	ctx := context.Background()
-	spiceDB, err := NewEmbeddedSpiceDB(ctx)
+	spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 	require.NoError(t, err)
 	defer func() {
 		err := spiceDB.Close()
@@ -86,7 +110,7 @@ func TestEmbeddedSpiceDB_Close(t *testing.T) {
 			name: "successful close with valid connection",
 			setupFn: func() *EmbeddedSpiceDB {
 				ctx := context.Background()
-				spiceDB, err := NewEmbeddedSpiceDB(ctx)
+				spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 				require.NoError(t, err)
 				return spiceDB
 			},
@@ -105,7 +129,7 @@ func TestEmbeddedSpiceDB_Close(t *testing.T) {
 			name: "multiple close calls",
 			setupFn: func() *EmbeddedSpiceDB {
 				ctx := context.Background()
-				spiceDB, err := NewEmbeddedSpiceDB(ctx)
+				spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 				require.NoError(t, err)
 				// Close once first
 				err = spiceDB.Close()
@@ -171,7 +195,8 @@ relationships: |-
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server, err := newEmbeddedServer(tt.ctx, tt.bootstrapFilePath, tt.bootstrapContent)
+			// Use buffered network for tests to avoid port conflicts
+			server, err := newEmbeddedServer(tt.ctx, tt.bootstrapFilePath, tt.bootstrapContent, true)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -195,7 +220,7 @@ func TestEmbeddedSpiceDB_Integration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	spiceDB, err := NewEmbeddedSpiceDB(ctx)
+	spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 	require.NoError(t, err)
 	defer func() {
 		err := spiceDB.Close()
@@ -303,7 +328,7 @@ func TestEmbeddedSpiceDB_ConcurrentAccess(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	spiceDB, err := NewEmbeddedSpiceDB(ctx)
+	spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 	require.NoError(t, err)
 	defer func() {
 		err := spiceDB.Close()
@@ -360,7 +385,7 @@ func BenchmarkNewEmbeddedSpiceDB(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		spiceDB, err := NewEmbeddedSpiceDB(ctx)
+		spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -370,7 +395,7 @@ func BenchmarkNewEmbeddedSpiceDB(b *testing.B) {
 
 func BenchmarkEmbeddedSpiceDB_GRPCConnection(b *testing.B) {
 	ctx := context.Background()
-	spiceDB, err := NewEmbeddedSpiceDB(ctx)
+	spiceDB, err := newTestEmbeddedSpiceDB(ctx)
 	if err != nil {
 		b.Fatal(err)
 	}

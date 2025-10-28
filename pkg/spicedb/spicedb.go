@@ -28,8 +28,8 @@ type EmbeddedSpiceDB struct {
 
 // NewEmbeddedSpiceDB creates and starts an embedded SpiceDB instance
 func NewEmbeddedSpiceDB(ctx context.Context) (*EmbeddedSpiceDB, error) {
-	// Create the embedded SpiceDB server
-	spiceDBServer, err := newEmbeddedServer(ctx, "", nil)
+	// Create the embedded SpiceDB server (production mode with TCP network)
+	spiceDBServer, err := newEmbeddedServer(ctx, "", nil, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SpiceDB server: %w", err)
 	}
@@ -64,7 +64,9 @@ func (e *EmbeddedSpiceDB) Close() error {
 
 // newEmbeddedServer creates a new embedded SpiceDB server instance
 // for use within the rbac-apiserver.
-func newEmbeddedServer(ctx context.Context, bootstrapFilePath string, bootstrapContent map[string][]byte) (server.RunnableServer, error) {
+// If useBufferedNetwork is true, uses in-memory buffered network (for tests)
+// instead of binding to TCP port 50051.
+func newEmbeddedServer(ctx context.Context, bootstrapFilePath string, bootstrapContent map[string][]byte, useBufferedNetwork bool) (server.RunnableServer, error) {
 	bootstrapOption := datastore.SetBootstrapFileContents(map[string][]byte{"schema": bootstrap})
 	if len(bootstrapContent) > 0 {
 		bootstrapOption = datastore.SetBootstrapFileContents(bootstrapContent)
@@ -72,13 +74,29 @@ func newEmbeddedServer(ctx context.Context, bootstrapFilePath string, bootstrapC
 		bootstrapOption = datastore.SetBootstrapFiles([]string{bootstrapFilePath})
 	}
 
-	return server.NewConfigWithOptionsAndDefaults(
-		// Configure gRPC server with buffered network for embedded use
-		server.WithGRPCServer(util.GRPCServerConfig{
-			Network: "tcp",
-			Enabled: true,
-			Address: "localhost:50051",
-		}),
+	// Choose network configuration based on parameter
+	var grpcServerOptions []server.ConfigOption
+	if useBufferedNetwork {
+		// Use buffered network for tests to avoid port conflicts
+		grpcServerOptions = []server.ConfigOption{
+			server.WithGRPCServer(util.GRPCServerConfig{
+				Network:    util.BufferedNetwork,
+				Enabled:    true,
+				BufferSize: 10 * 1024 * 1024, // 10 MiB
+			}),
+		}
+	} else {
+		// Use TCP network for production
+		grpcServerOptions = []server.ConfigOption{
+			server.WithGRPCServer(util.GRPCServerConfig{
+				Network: "tcp",
+				Enabled: true,
+				Address: "localhost:50051",
+			}),
+		}
+	}
+
+	options := append(grpcServerOptions,
 		// Disable dispatch server (not needed for embedded use)
 		server.WithDispatchServer(util.GRPCServerConfig{Enabled: false}),
 		server.WithDispatchUpstreamAddr(""),
@@ -113,5 +131,7 @@ func newEmbeddedServer(ctx context.Context, bootstrapFilePath string, bootstrapC
 			)),
 		// No authentication for embedded mode (handled by the API server)
 		server.WithGRPCAuthFunc(func(ctx context.Context) (context.Context, error) { return ctx, nil }),
-	).Complete(ctx)
+	)
+
+	return server.NewConfigWithOptionsAndDefaults(options...).Complete(ctx)
 }
