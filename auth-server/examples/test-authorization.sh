@@ -33,12 +33,22 @@ kubectl config use-context kind-hub
 
 kubectl apply -f examples/permissionbinding-alice.yaml
 kubectl apply -f examples/permissionbinding-bob.yaml
+kubectl apply -f examples/permissionbinding-charlie.yaml
 
 echo_pass "PermissionBindings created"
 echo ""
 
 # Give time for propagation
 sleep 2
+
+# Test 1b: Create native RBAC for charlie on managed cluster
+echo_test "Creating native Kubernetes RBAC for charlie on managed cluster..."
+kubectl config use-context kind-managed
+
+kubectl apply -f examples/charlie-native-rbac.yaml
+
+echo_pass "Native RBAC for charlie created"
+echo ""
 
 # Test 2: Check auth-server is running
 echo_test "Checking auth-server status on managed cluster..."
@@ -92,12 +102,44 @@ else
 fi
 echo ""
 
-# Test 5: Check auth-server logs
-echo_test "Checking auth-server logs for recent authorization requests..."
-kubectl logs -n auth-server-system deployment/auth-server --tail=20
+# Test 5: Test charlie permissions (NoOpinion case)
+echo_test "Testing charlie's permissions (auth-server returns NoOpinion, native RBAC allows)..."
+
+echo "  Charlie has PermissionBinding for 'other-cluster', not 'managed-cluster'"
+echo "  Auth-server should return NoOpinion, falling back to native Kubernetes RBAC"
 echo ""
 
-# Test 6: Verify PermissionRequests on hub
+if kubectl auth can-i get pods --as=charlie -n default &>/dev/null; then
+    echo_pass "Charlie can get pods in default namespace (native RBAC allows)"
+else
+    echo_fail "Charlie cannot get pods in default namespace (should be allowed by native RBAC)"
+fi
+
+if kubectl auth can-i list pods --as=charlie -n default &>/dev/null; then
+    echo_pass "Charlie can list pods in default namespace (native RBAC allows)"
+else
+    echo_fail "Charlie cannot list pods in default namespace (should be allowed by native RBAC)"
+fi
+
+if kubectl auth can-i create pods --as=charlie -n default &>/dev/null; then
+    echo_fail "Charlie can create pods (native RBAC should not allow)"
+else
+    echo_pass "Charlie cannot create pods (correctly denied by native RBAC)"
+fi
+
+if kubectl auth can-i get pods --as=charlie -n kube-system &>/dev/null; then
+    echo_fail "Charlie can get pods in kube-system (native RBAC should not allow)"
+else
+    echo_pass "Charlie cannot get pods in kube-system (correctly denied by native RBAC)"
+fi
+echo ""
+
+# Test 6: Check auth-server logs
+echo_test "Checking auth-server logs for recent authorization requests..."
+kubectl logs -n auth-server-system deployment/auth-server --tail=30
+echo ""
+
+# Test 7: Verify PermissionRequests on hub
 echo_test "Checking for PermissionRequests on hub (should be cleaned up)..."
 kubectl config use-context kind-hub
 
@@ -112,6 +154,12 @@ echo ""
 echo "=========================================="
 echo "Test Summary"
 echo "=========================================="
+echo ""
+echo "Tests covered:"
+echo "  1. Alice - Has hub PermissionBinding for managed-cluster (Allowed/Denied by auth-server)"
+echo "  2. Bob - Has hub PermissionBinding for managed-cluster (Allowed/Denied by auth-server)"
+echo "  3. Charlie - Has hub PermissionBinding for different cluster (NoOpinion from auth-server,"
+echo "              falls back to native Kubernetes RBAC on managed cluster)"
 echo ""
 echo "Note: Current implementation hardcodes user to 'system:admin'"
 echo "All checks currently evaluate against system:admin permissions."
