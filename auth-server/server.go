@@ -88,7 +88,8 @@ func (s *AuthServer) HandleAuthorization(w http.ResponseWriter, r *http.Request)
 	if allowed {
 		s.respondAllowed(w, &sar, reason)
 	} else {
-		s.respondDenied(w, &sar, reason)
+		// Return NoOpinion instead of Denied to allow RBAC chain to continue
+		s.respondNoOpinion(w, &sar, reason)
 	}
 }
 
@@ -132,7 +133,7 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 	// Parse status to determine if access is allowed
 	allowed := s.isAllowed(result.Status.AllowedList, pr.Spec)
 
-	reason := s.buildReason(allowed, sar)
+	reason := s.buildReason(allowed)
 
 	klog.V(4).Infof("Authorization result for user %s: allowed=%v", sar.Spec.User, allowed)
 	return allowed, reason, nil
@@ -167,11 +168,11 @@ func (s *AuthServer) isAllowed(allowedList []rbacv1alpha1.AllowedItem, spec rbac
 	return false
 }
 
-func (s *AuthServer) buildReason(allowed bool, sar *authzv1.SubjectAccessReview) string {
+func (s *AuthServer) buildReason(allowed bool) string {
 	if allowed {
 		return fmt.Sprintf("Allowed by hub RBAC policy in cluster %s", s.clusterName)
 	}
-	return fmt.Sprintf("Denied by hub RBAC policy in cluster %s", s.clusterName)
+	return fmt.Sprintf("No hub RBAC policy for this resource in cluster %s, deferring to local RBAC", s.clusterName)
 }
 
 func (s *AuthServer) respondAllowed(w http.ResponseWriter, sar *authzv1.SubjectAccessReview, reason string) {
@@ -186,6 +187,17 @@ func (s *AuthServer) respondDenied(w http.ResponseWriter, sar *authzv1.SubjectAc
 	sar.Status = authzv1.SubjectAccessReviewStatus{
 		Allowed: false,
 		Denied:  true,
+		Reason:  reason,
+	}
+	s.respond(w, sar)
+}
+
+func (s *AuthServer) respondNoOpinion(w http.ResponseWriter, sar *authzv1.SubjectAccessReview, reason string) {
+	// NoOpinion: neither Allowed nor Denied
+	// This allows the authorization chain to continue to the next authorizer (e.g., RBAC)
+	sar.Status = authzv1.SubjectAccessReviewStatus{
+		Allowed: false,
+		Denied:  false,
 		Reason:  reason,
 	}
 	s.respond(w, sar)
