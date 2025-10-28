@@ -1,0 +1,25 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: bob-multi-cluster-admin
+spec:
+  subject:
+    kind: User
+    name: bob
+  permissions:
+    - role: admin
+      resources:
+        - pods
+        - deployments
+        - services
+      groups:
+        - ""
+        - apps
+      namespaces:
+        - production
+        - staging
+      names:
+        - "*"
+      clusters:
+        - cluster1
+        - cluster2

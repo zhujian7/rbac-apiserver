@@ -1,0 +1,20 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: cluster-admin-all-access
+spec:
+  subject:
+    kind: User
+    name: admin-user
+  permissions:
+    - role: admin
+      resources:
+        - "*"
+      groups:
+        - "*"
+      namespaces:
+        - "*"
+      names:
+        - "*"
+      clusters:
+        - cluster1

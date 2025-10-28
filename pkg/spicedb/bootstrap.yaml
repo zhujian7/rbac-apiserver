@@ -8,23 +8,29 @@ schema: |-
   definition resource {
     relation admin: user | group#member
     relation viewer: user | group#member
-    permission view = viewer + admin
-    permission edit = admin
+    relation editor: user | group#member
+    
+    permission view = viewer + editor + admin
+    permission edit = editor + admin
   }
 
   definition cluster {
     relation admin: user | group#member
     relation viewer: user | group#member
-    permission view = viewer + admin
-    permission edit = admin
+    relation editor: user | group#member
+    
+    permission view = viewer + editor + admin
+    permission edit = editor + admin
   }
 
   definition namespace {
     relation parent: cluster
     relation admin: user | group#member
     relation viewer: user | group#member
-    permission view = viewer + admin + parent->view
-    permission edit = admin + parent->edit
+    relation editor: user | group#member
+
+    permission view = viewer + editor + admin + parent->view
+    permission edit = editor + admin + parent->edit
   }
 
 relationships: |-

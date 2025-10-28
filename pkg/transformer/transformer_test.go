@@ -52,7 +52,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 
 				assert.Equal(t, v1.RelationshipUpdate_OPERATION_CREATE, update.Operation)
 				assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
-				assert.Equal(t, "cluster/cluster1/namespace/default/name/pod1", update.Relationship.Resource.ObjectId)
+				assert.Equal(t, "cluster/cluster1/namespace/default/pods/pod1", update.Relationship.Resource.ObjectId)
 				assert.Equal(t, "admin", update.Relationship.Relation)
 				assert.Equal(t, "user", update.Relationship.Subject.Object.ObjectType)
 				assert.Equal(t, "alice", update.Relationship.Subject.Object.ObjectId)
@@ -119,7 +119,7 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 				update := updates[0]
 
 				assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
-				assert.Equal(t, "*", update.Relationship.Resource.ObjectId)
+				assert.Equal(t, "all", update.Relationship.Resource.ObjectId)
 			},
 		},
 		{
@@ -175,7 +175,7 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 				},
 			},
 			expectError:        false,
-			expectedResource:   "cluster/cluster1/namespace/default/name/pod1",
+			expectedResource:   "cluster/cluster1/namespace/default/pods/pod1",
 			expectedPermission: "view",
 		},
 		{
@@ -191,7 +191,7 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 				},
 			},
 			expectError:        false,
-			expectedResource:   "cluster/cluster2",
+			expectedResource:   "cluster/cluster2/services",
 			expectedPermission: "edit",
 		},
 		{
@@ -241,7 +241,7 @@ func TestSpiceDBTransformer_CheckPermissionFromRequest(t *testing.T) {
 	require.NotNil(t, checkReq)
 
 	assert.Equal(t, "resource", checkReq.Resource.ObjectType)
-	assert.Equal(t, "cluster/cluster1/name/pod1", checkReq.Resource.ObjectId)
+	assert.Equal(t, "cluster/cluster1/pods/pod1", checkReq.Resource.ObjectId)
 	assert.Equal(t, "view", checkReq.Permission)
 	assert.Equal(t, "user", checkReq.Subject.Object.ObjectType)
 	assert.Equal(t, "alice", checkReq.Subject.Object.ObjectId)
@@ -278,7 +278,7 @@ func TestSpiceDBTransformer_CreateRelationshipUpdatesForDeletion(t *testing.T) {
 	update := deleteUpdates[0]
 	assert.Equal(t, v1.RelationshipUpdate_OPERATION_DELETE, update.Operation)
 	assert.Equal(t, "resource", update.Relationship.Resource.ObjectType)
-	assert.Equal(t, "cluster/cluster1/namespace/default/name/pod1", update.Relationship.Resource.ObjectId)
+	assert.Equal(t, "cluster/cluster1/namespace/default/pods/pod1", update.Relationship.Resource.ObjectId)
 	assert.Equal(t, "admin", update.Relationship.Relation)
 	assert.Equal(t, "user", update.Relationship.Subject.Object.ObjectType)
 	assert.Equal(t, "alice", update.Relationship.Subject.Object.ObjectId)
@@ -346,20 +346,24 @@ func TestSpiceDBTransformer_MapFunctions(t *testing.T) {
 		tests := []struct {
 			cluster   string
 			namespace string
+			resource  string
 			name      string
 			expected  string
 		}{
-			{"cluster1", "default", "pod1", "cluster/cluster1/namespace/default/name/pod1"},
-			{"cluster1", "default", "", "cluster/cluster1/namespace/default"},
-			{"cluster1", "", "", "cluster/cluster1"},
-			{"", "", "", "*"},
-			{"*", "*", "*", "*"},
+			{"cluster1", "default", "pods", "pod1", "cluster/cluster1/namespace/default/pods/pod1"},
+			{"cluster1", "default", "pods", "*", "cluster/cluster1/namespace/default/pods/_ALL_"},
+			{"cluster1", "default", "pods", "", "cluster/cluster1/namespace/default/pods"},
+			{"cluster1", "default", "", "pod1", "cluster/cluster1/namespace/default/pod1"},
+			{"cluster1", "default", "", "", "cluster/cluster1/namespace/default"},
+			{"cluster1", "", "", "", "cluster/cluster1"},
+			{"", "", "", "", "all"},
+			{"*", "*", "*", "*", "all"},
 		}
 
 		for _, tt := range tests {
-			result := transformer.buildResourceID(tt.cluster, tt.namespace, tt.name)
-			assert.Equal(t, tt.expected, result, "buildResourceID(%s, %s, %s) = %s, want %s",
-				tt.cluster, tt.namespace, tt.name, result, tt.expected)
+			result := transformer.buildResourceID(tt.cluster, tt.namespace, tt.resource, tt.name)
+			assert.Equal(t, tt.expected, result, "buildResourceID(%s, %s, %s, %s) = %s, want %s",
+				tt.cluster, tt.namespace, tt.resource, tt.name, result, tt.expected)
 		}
 	})
 }

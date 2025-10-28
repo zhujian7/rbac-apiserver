@@ -1,0 +1,11 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionRequest
+metadata:
+  name: check-alice-pod-view
+spec:
+  group: ""
+  resource: pods
+  verb: get
+  cluster: cluster1
+  namespace: default
+  name: my-pod
