@@ -143,7 +143,7 @@ deploy_managed_auth_server() {
     HUB_TOKEN=$(kubectl create token default -n default --duration=87600h)
 
     # Create RBAC permissions for auth-server to call PermissionRequest API
-    echo_info "Creating RBAC for PermissionRequest API access..."
+    echo_info "Creating RBAC for PermissionRequest API access and impersonation..."
     cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -155,6 +155,15 @@ rules:
   verbs: ["create", "get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: auth-server-impersonator
+rules:
+- apiGroups: [""]
+  resources: ["users", "groups", "serviceaccounts"]
+  verbs: ["impersonate"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: default-permissionrequest-creator
@@ -162,6 +171,32 @@ subjects:
 - kind: ServiceAccount
   name: default
   namespace: default
+roleRef:
+  kind: ClusterRole
+  name: permissionrequest-creator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: auth-server-impersonator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: auth-server-impersonator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: permissionrequest-creator
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: permissionrequest-creator
