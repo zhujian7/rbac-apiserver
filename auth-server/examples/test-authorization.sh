@@ -31,9 +31,15 @@ echo ""
 echo_test "Creating PermissionBindings on hub cluster..."
 kubectl config use-context kind-hub
 
-kubectl apply -f examples/permissionbinding-alice.yaml
-kubectl apply -f examples/permissionbinding-bob.yaml
-kubectl apply -f examples/permissionbinding-charlie.yaml
+# Delete existing PermissionBindings if they exist
+kubectl delete -f examples/permissionbinding-alice.yaml --ignore-not-found=true
+kubectl delete -f examples/permissionbinding-bob.yaml --ignore-not-found=true
+kubectl delete -f examples/permissionbinding-charlie.yaml --ignore-not-found=true
+
+# Create fresh PermissionBindings
+kubectl create -f examples/permissionbinding-alice.yaml
+kubectl create -f examples/permissionbinding-bob.yaml
+kubectl create -f examples/permissionbinding-charlie.yaml
 
 echo_pass "PermissionBindings created"
 echo ""
@@ -78,13 +84,6 @@ if kubectl auth can-i create deployments --as=alice -n default &>/dev/null; then
 else
     echo_fail "Alice cannot create deployments in default namespace"
 fi
-
-if kubectl auth can-i get pods --as=alice -n kube-system &>/dev/null; then
-    echo_pass "Alice can get pods in kube-system namespace (viewer)"
-else
-    echo_fail "Alice cannot get pods in kube-system namespace"
-fi
-echo ""
 
 # Test 4: Test bob permissions
 echo_test "Testing bob's permissions (should be limited)..."

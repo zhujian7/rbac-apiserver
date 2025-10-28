@@ -13,8 +13,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
-	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 	rbacclient "github.com/stolostron/rbac-apiserver/apis/generated/clientset/versioned"
+	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 )
 
 type AuthServer struct {
@@ -142,41 +142,52 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 		return false, "", fmt.Errorf("failed to create PermissionRequest: %w", err)
 	}
 
+	klog.Infof("PermissionRequest result for user %s: AllowedList=%+v", sar.Spec.User, result.Status.AllowedList)
+
 	// Parse status to determine if access is allowed
 	allowed := s.isAllowed(result.Status.AllowedList, pr.Spec)
 
 	reason := s.buildReason(allowed)
 
-	klog.V(4).Infof("Authorization result for user %s: allowed=%v", sar.Spec.User, allowed)
+	klog.Infof("Authorization result for user %s: allowed=%v", sar.Spec.User, allowed)
 	return allowed, reason, nil
 }
 
 func (s *AuthServer) isAllowed(allowedList []rbacv1alpha1.AllowedItem, spec rbacv1alpha1.PermissionRequestSpec) bool {
 	if len(allowedList) == 0 {
+		klog.V(4).Infof("isAllowed: AllowedList is empty")
 		return false
 	}
+
+	klog.V(5).Infof("isAllowed: checking spec=%+v against allowedList=%+v", spec, allowedList)
 
 	for _, item := range allowedList {
 		// Check cluster match
 		if spec.Cluster != "" && item.Cluster != spec.Cluster && item.Cluster != "*" {
+			klog.V(5).Infof("isAllowed: cluster mismatch - spec.Cluster=%s, item.Cluster=%s", spec.Cluster, item.Cluster)
 			continue
 		}
 
 		for _, nsName := range item.NamespacedNames {
 			// Check namespace match
 			if spec.Namespace != "" && nsName.Namespace != spec.Namespace && nsName.Namespace != "*" {
+				klog.V(5).Infof("isAllowed: namespace mismatch - spec.Namespace=%s, nsName.Namespace=%s", spec.Namespace, nsName.Namespace)
 				continue
 			}
 
 			// Check name match
 			for _, name := range nsName.Names {
 				if name == "*" || spec.Name == "" || spec.Name == name {
+					klog.V(4).Infof("isAllowed: MATCH found - name=%s", name)
 					return true
+				} else {
+					klog.V(5).Infof("isAllowed: name mismatch - spec.Name=%s, name=%s", spec.Name, name)
 				}
 			}
 		}
 	}
 
+	klog.V(4).Infof("isAllowed: no match found")
 	return false
 }
 

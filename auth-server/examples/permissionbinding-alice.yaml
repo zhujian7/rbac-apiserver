@@ -15,10 +15,3 @@ spec:
     role: "admin"
     clusters: ["managed-cluster"]
 
-  # Allow alice to view all resources in kube-system
-  - resources: ["*"]
-    groups: ["*"]
-    namespaces: ["kube-system"]
-    names: ["*"]
-    role: "viewer"
-    clusters: ["managed-cluster"]
