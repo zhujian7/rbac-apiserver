@@ -102,16 +102,32 @@ kubectl create secret generic hub-kubeconfig \
   --from-file=kubeconfig=/path/to/hub/kubeconfig \
   -n auth-server-system
 
-# Generate TLS certs
-openssl req -x509 -newkey rsa:2048 -nodes \
-  -keyout /tmp/tls.key \
-  -out /tmp/tls.crt \
-  -days 365 \
-  -subj "/CN=auth-server.auth-server-system.svc"
+# Generate TLS certs signed by cluster CA
+# Deploy service first to get ClusterIP
+kubectl apply -f manifests/service.yaml
+AUTH_SERVER_IP=$(kubectl get svc auth-server -n auth-server-system -o jsonpath='{.spec.clusterIP}')
+
+# Generate certificate inside control plane using cluster CA
+# (Adjust for your cluster type - this example is for Kind)
+kubectl exec -n kube-system <control-plane-pod> -- bash -c "
+cd /etc/kubernetes/pki
+openssl genrsa -out auth-server.key 2048
+openssl req -new -key auth-server.key -out auth-server.csr \
+  -subj '/CN=auth-server.auth-server-system.svc' \
+  -addext 'subjectAltName=DNS:auth-server.auth-server-system.svc,DNS:auth-server.auth-server-system.svc.cluster.local,IP:${AUTH_SERVER_IP}'
+openssl x509 -req -in auth-server.csr \
+  -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out auth-server.crt -days 365 \
+  -extensions v3_req -extfile <(printf '[v3_req]\nsubjectAltName=DNS:auth-server.auth-server-system.svc,DNS:auth-server.auth-server-system.svc.cluster.local,IP:${AUTH_SERVER_IP}')
+"
+
+# Extract certs and create secret
+kubectl cp kube-system/<control-plane-pod>:/etc/kubernetes/pki/auth-server.crt /tmp/auth-server.crt
+kubectl cp kube-system/<control-plane-pod>:/etc/kubernetes/pki/auth-server.key /tmp/auth-server.key
 
 kubectl create secret tls auth-server-certs \
-  --cert=/tmp/tls.crt \
-  --key=/tmp/tls.key \
+  --cert=/tmp/auth-server.crt \
+  --key=/tmp/auth-server.key \
   -n auth-server-system
 
 # Deploy
@@ -123,41 +139,34 @@ kubectl apply -f manifests/deployment.yaml
 
 ### 1. Create PermissionBindings on Hub
 
-Switch to hub cluster and create a permission binding:
+Switch to hub cluster and create permission bindings:
 
 ```bash
 kubectl config use-context kind-hub
 
-cat <<EOF | kubectl apply -f -
-apiVersion: authorization.open-cluster-management.io/v1alpha1
-kind: PermissionBinding
-metadata:
-  name: alice-admin
-spec:
-  subject:
-    kind: User
-    name: alice
-  permissions:
-  - resources: ["pods", "deployments", "services"]
-    groups: ["", "apps"]
-    namespaces: ["default"]
-    role: "admin"
-    clusters: ["managed-cluster"]
-EOF
+# Apply example PermissionBindings
+kubectl apply -f auth-server/examples/permissionbinding-alice.yaml
+kubectl apply -f auth-server/examples/permissionbinding-bob.yaml
 ```
 
 ### 2. Test Authorization on Managed Cluster
 
-**Important Note**: Due to the current rbac-apiserver implementation hardcoding the user to "system:admin", all authorization checks will currently pass for system:admin permissions. This will be fixed when the user context is properly extracted from the PermissionRequest.
+The auth-server implements NoOpinion authorization, allowing both hub and local RBAC:
 
 ```bash
 kubectl config use-context kind-managed
 
-# Test as alice (will check system:admin permissions for now)
+# Test as alice (has PermissionBinding on hub)
 kubectl auth can-i get pods --as=alice -n default
+# Expected: yes (authorized via hub policy)
 
-# Test as bob (should be denied if no permissions)
+# Test as bob (no hub policy, but may have local RBAC)
 kubectl auth can-i get pods --as=bob -n default
+# Expected: depends on local RoleBindings (NoOpinion defers to RBAC)
+
+# Test as charlie (no hub policy, no local RBAC)
+kubectl auth can-i get pods --as=charlie -n default
+# Expected: no (NoOpinion → RBAC checks → denied)
 ```
 
 ### 3. Check Auth-Server Logs
@@ -217,13 +226,54 @@ make build-image
 - `--addr`: Server address (default: `:8443`)
 - `--v`: Log verbosity level
 
+## Authorization Behavior
+
+The auth-server implements a **NoOpinion** authorization pattern that allows falling back to local RBAC:
+
+1. **Hub policy allows**: Returns `Allowed=true` (authorization chain stops, request allowed)
+2. **No hub policy found**: Returns `NoOpinion` (`Allowed=false, Denied=false`) - authorization chain continues to local RBAC
+3. **Error contacting hub**: Returns `Denied=true` (fail-closed for security)
+
+This means users can be authorized by either:
+- Hub RBAC policies (PermissionBindings on hub cluster)
+- Local RBAC policies (RoleBindings on managed cluster)
+
+Example: If alice has a PermissionBinding on the hub, she's authorized via hub policy. If bob has no hub policy but has a local RoleBinding, he's authorized via local RBAC.
+
+## Technical Details
+
+### Why ClusterIP Instead of DNS Names?
+
+The webhook configuration uses ClusterIP addresses instead of DNS names (e.g., `https://10.96.11.8:443` instead of `https://auth-server.auth-server-system.svc:443`).
+
+**Reason**: kube-apiserver runs with `hostNetwork: true` and cannot resolve in-cluster DNS names. This is a Kubernetes design limitation that affects authorization webhooks (which use kubeconfig-based configuration).
+
+This limitation applies to all Kubernetes distributions (Kind, OpenShift, EKS, AKS, GKE, etc.), not just Kind clusters.
+
+**Note**: ClusterIP addresses are stable and don't change unless the Service is deleted and recreated.
+
+References:
+- [Kind Issue #2467](https://github.com/kubernetes-sigs/kind/issues/2467)
+- Kubernetes source: `staging/src/k8s.io/apiserver/plugin/pkg/authorizer/webhook/webhook.go`
+
+### TLS Certificate Requirements
+
+The auth-server certificate must be:
+- Signed by the cluster's CA (same CA that signs apiserver certificates)
+- Include proper SANs (Subject Alternative Names):
+  - DNS: `auth-server.auth-server-system.svc`
+  - DNS: `auth-server.auth-server-system.svc.cluster.local`
+  - IP: Service ClusterIP address
+
+This allows the kube-apiserver to verify the certificate using its trusted CA bundle.
+
 ## Known Limitations
 
-1. **User Context**: Currently, the rbac-apiserver hardcodes the user to "system:admin". This means all permission checks are evaluated for system:admin, not the actual requesting user. This will be fixed in a future update to the rbac-apiserver.
+1. **Performance**: Each authorization check creates and deletes a PermissionRequest object on the hub. For high-frequency workloads, consider implementing caching.
 
-2. **Performance**: Each authorization check creates and deletes a PermissionRequest object on the hub. For high-frequency workloads, consider implementing caching or using SubjectAccessReview API in the future.
+2. **HA**: While the deployment runs 2 replicas, proper HA testing has not been performed.
 
-3. **HA**: While the deployment runs 2 replicas, proper HA testing has not been performed.
+3. **ClusterIP Dependency**: The webhook configuration uses ClusterIP which requires the Service to remain stable. Deleting and recreating the Service will require webhook reconfiguration.
 
 ## Troubleshooting
 

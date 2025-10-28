@@ -243,8 +243,12 @@ configure_webhook() {
 
     kubectl config use-context kind-managed
 
-    # Get auth-server service ClusterIP
+    # Get auth-server service ClusterIP for webhook
+    # Note: We use ClusterIP because kube-apiserver runs with hostNetwork and cannot
+    # resolve in-cluster DNS (this is a Kubernetes design limitation, not specific to Kind).
+    # See: https://github.com/kubernetes-sigs/kind/issues/2467
     AUTH_SERVER_IP=$(kubectl get svc auth-server -n auth-server-system -o jsonpath='{.spec.clusterIP}')
+    AUTH_SERVER_URL="https://${AUTH_SERVER_IP}:443/authorize"
 
     # Create webhook config file that uses cluster CA for verification
     cat > /tmp/webhook-config.yaml <<EOF
@@ -254,7 +258,7 @@ clusters:
 - name: auth-server
   cluster:
     certificate-authority: /etc/kubernetes/pki/ca.crt
-    server: https://${AUTH_SERVER_IP}:443/authorize
+    server: ${AUTH_SERVER_URL}
 users:
 - name: auth-server
 contexts:

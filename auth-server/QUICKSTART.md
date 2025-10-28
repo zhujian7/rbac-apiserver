@@ -174,11 +174,14 @@ kind delete cluster --name hub
 kind delete cluster --name managed
 ```
 
-## Current Limitations
+## Authorization Behavior
 
-⚠️ **Important**: The current rbac-apiserver implementation hardcodes the user to "system:admin" in PermissionRequest evaluation. This means all authorization checks currently evaluate against system:admin permissions, not the actual requesting user.
+The auth-server uses a **NoOpinion** pattern:
+- If a PermissionBinding exists on the hub for the user → **Allowed** (authorized via hub policy)
+- If no PermissionBinding exists on the hub → **NoOpinion** (defers to local RBAC)
+- If error contacting hub → **Denied** (fail-closed)
 
-This will be addressed in a future update to rbac-apiserver to properly extract user context from the PermissionRequest.
+This means users can be authorized by **either** hub policies **or** local RBAC, providing flexibility and backwards compatibility.
 
 ## Support
 
