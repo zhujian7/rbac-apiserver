@@ -120,32 +120,36 @@ func (s *SpiceDBIntegration) EvaluatePermissionRequest(ctx context.Context, pr *
 
 	klog.Infof("Permission check result for user %s on resource %s: %v", userID, checkReq.Resource.ObjectId, response.Permissionship)
 
-	// If permission denied and a specific name was requested, also check against wildcard (_ALL_)
-	if response.Permissionship != v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION && pr.Spec.Name != "" && pr.Spec.Name != "*" {
+	// If permission denied and the request is not already for a wildcard, check against wildcard (_ALL_)
+	// This handles both specific names and empty names (list operations)
+	if response.Permissionship != v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION && pr.Spec.Name != "*" {
 		// Build wildcard resource ID by replacing the specific name with _ALL_
 		wildcardResourceID := s.transformer.BuildResourceIDWithWildcard(pr.Spec.Cluster, pr.Spec.Namespace, pr.Spec.Resource)
 
-		wildcardCheckReq := &v1.CheckPermissionRequest{
-			Resource: &v1.ObjectReference{
-				ObjectType: checkReq.Resource.ObjectType,
-				ObjectId:   wildcardResourceID,
-			},
-			Permission: checkReq.Permission,
-			Subject:    checkReq.Subject,
-		}
+		// Only check wildcard if it's different from what we just checked
+		if wildcardResourceID != checkReq.Resource.ObjectId {
+			wildcardCheckReq := &v1.CheckPermissionRequest{
+				Resource: &v1.ObjectReference{
+					ObjectType: checkReq.Resource.ObjectType,
+					ObjectId:   wildcardResourceID,
+				},
+				Permission: checkReq.Permission,
+				Subject:    checkReq.Subject,
+			}
 
-		klog.Infof("Checking wildcard permission: resourceType=%s, resourceID=%s", wildcardCheckReq.Resource.ObjectType, wildcardResourceID)
-		wildcardResponse, wildcardErr := s.checkPermission(ctx, wildcardCheckReq)
-		if wildcardErr != nil {
-			klog.Infof("Wildcard check failed: %v", wildcardErr)
-			// Return original response if wildcard check fails
-			return response, nil
-		}
+			klog.Infof("Checking wildcard permission: resourceType=%s, resourceID=%s", wildcardCheckReq.Resource.ObjectType, wildcardResourceID)
+			wildcardResponse, wildcardErr := s.checkPermission(ctx, wildcardCheckReq)
+			if wildcardErr != nil {
+				klog.Infof("Wildcard check failed: %v", wildcardErr)
+				// Return original response if wildcard check fails
+				return response, nil
+			}
 
-		klog.Infof("Wildcard permission check result: %v", wildcardResponse.Permissionship)
-		// Use wildcard response if it grants permission
-		if wildcardResponse.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION {
-			return wildcardResponse, nil
+			klog.Infof("Wildcard permission check result: %v", wildcardResponse.Permissionship)
+			// Use wildcard response if it grants permission
+			if wildcardResponse.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION {
+				return wildcardResponse, nil
+			}
 		}
 	}
 
