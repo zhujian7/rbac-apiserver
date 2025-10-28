@@ -9,6 +9,7 @@ import (
 
 	authzv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
@@ -17,7 +18,7 @@ import (
 )
 
 type AuthServer struct {
-	hubClient   *rbacclient.Clientset
+	hubConfig   *rest.Config
 	clusterName string
 }
 
@@ -30,14 +31,15 @@ func NewAuthServer(hubKubeconfig, clusterName string) (*AuthServer, error) {
 	// Set reasonable timeouts for authz checks
 	config.Timeout = 5 * time.Second
 
-	hubClient, err := rbacclient.NewForConfig(config)
+	// Test connection
+	_, err = rbacclient.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hub client: %w", err)
 	}
 
 	klog.Infof("Successfully connected to hub rbac-apiserver")
 	return &AuthServer{
-		hubClient:   hubClient,
+		hubConfig:   config,
 		clusterName: clusterName,
 	}, nil
 }
@@ -110,25 +112,35 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 		},
 	}
 
-	// NOTE: Current rbac-apiserver hardcodes user to "system:admin"
-	// This will be fixed later to accept user from the request
+	klog.V(5).Infof("Creating PermissionRequest on hub for user %s: %+v", sar.Spec.User, pr.Spec)
 
-	klog.V(5).Infof("Creating PermissionRequest on hub: %+v", pr.Spec)
+	// Create a client with user impersonation
+	// This allows the rbac-apiserver to evaluate permissions for the actual user
+	impersonatedConfig := rest.CopyConfig(s.hubConfig)
 
-	// Call hub rbac-apiserver
-	result, err := s.hubClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, pr, metav1.CreateOptions{})
+	// Convert Extra from authzv1.ExtraValue to []string
+	extra := make(map[string][]string)
+	for k, v := range sar.Spec.Extra {
+		extra[k] = []string(v)
+	}
+
+	impersonatedConfig.Impersonate = rest.ImpersonationConfig{
+		UserName: sar.Spec.User,
+		Groups:   sar.Spec.Groups,
+		Extra:    extra,
+	}
+
+	impersonatedClient, err := rbacclient.NewForConfig(impersonatedConfig)
+	if err != nil {
+		return false, "", fmt.Errorf("failed to create impersonated client: %w", err)
+	}
+
+	// Call hub rbac-apiserver with impersonation
+	// Note: PermissionRequest is ephemeral (like CSR) - it's evaluated immediately and not persisted
+	result, err := impersonatedClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, pr, metav1.CreateOptions{})
 	if err != nil {
 		return false, "", fmt.Errorf("failed to create PermissionRequest: %w", err)
 	}
-
-	// Cleanup: Delete the PermissionRequest after evaluation
-	defer func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.hubClient.AuthorizationV1alpha1().PermissionRequests().Delete(cleanupCtx, result.Name, metav1.DeleteOptions{}); err != nil {
-			klog.V(4).Infof("Failed to cleanup PermissionRequest %s: %v", result.Name, err)
-		}
-	}()
 
 	// Parse status to determine if access is allowed
 	allowed := s.isAllowed(result.Status.AllowedList, pr.Spec)
