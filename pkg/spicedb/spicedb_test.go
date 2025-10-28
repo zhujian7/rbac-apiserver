@@ -349,7 +349,8 @@ func TestEmbeddedSpiceDB_ConcurrentAccess(t *testing.T) {
 
 // Helper function to create context with timeout
 func createContextWithTimeout(duration time.Duration) context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), duration)
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
 	return ctx
 }
 

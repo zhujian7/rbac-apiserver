@@ -76,8 +76,11 @@ func (s *MyAPIServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	go func() error {
-		return s.SpiceDB.Server.Run(ctx)
+	go func() {
+		klog.Infof("Starting embedded SpiceDB server...")
+		if err := s.SpiceDB.Server.Run(ctx); err != nil {
+			klog.Fatalf("Server failed: %v", err)
+		}
 	}()
 
 	return s.GenericAPIServer.PrepareRun().RunWithContext(ctx)

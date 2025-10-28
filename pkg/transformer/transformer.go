@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
@@ -9,6 +10,25 @@ import (
 
 	rbacv1alpha1 "github.com/stolostron/rbac-apiserver/apis/rbac/v1alpha1"
 )
+
+// validObjectIDRegex matches SpiceDB's validation pattern for ObjectID
+// Pattern: ^(([a-zA-Z0-9/_|\-=+]{1,})|\\*)$
+var invalidObjectIDChars = regexp.MustCompile(`[^a-zA-Z0-9/_|\-=+*]`)
+
+// sanitizeObjectID removes or replaces characters that are invalid for SpiceDB ObjectIDs
+// SpiceDB only allows: a-zA-Z0-9/_|\-=+ and *
+func sanitizeObjectID(id string) string {
+	if id == "" {
+		return ""
+	}
+	// Replace invalid characters with underscore
+	sanitized := invalidObjectIDChars.ReplaceAllString(id, "_")
+	// Ensure it's not empty after sanitization
+	if sanitized == "" {
+		return "invalid"
+	}
+	return sanitized
+}
 
 // SpiceDBTransformer handles conversion between RBAC API resources and SpiceDB relationships
 type SpiceDBTransformer struct{}
@@ -53,7 +73,7 @@ func (t *SpiceDBTransformer) TransformPermissionRequest(pr *rbacv1alpha1.Permiss
 
 	// Build resource reference
 	resourceType := t.mapResourceType(pr.Spec.Resource)
-	resourceID := t.buildResourceID(pr.Spec.Cluster, pr.Spec.Namespace, pr.Spec.Name)
+	resourceID := t.buildResourceID(pr.Spec.Cluster, pr.Spec.Namespace, pr.Spec.Resource, pr.Spec.Name)
 
 	// Map verb to permission
 	permission := t.mapVerbToPermission(pr.Spec.Verb)
@@ -78,30 +98,42 @@ func (t *SpiceDBTransformer) convertSubject(subject *rbacv1.Subject) (*v1.Subjec
 		return nil, fmt.Errorf("subject cannot be nil")
 	}
 
-	var objectType, objectID string
+	var objectType, objectID, optionalRelation string
 
 	switch subject.Kind {
 	case "User":
 		objectType = "user"
-		objectID = subject.Name
+		objectID = sanitizeObjectID(subject.Name)
+		// Users don't need an optional relation
 	case "Group":
 		objectType = "group"
-		objectID = subject.Name
+		objectID = sanitizeObjectID(subject.Name)
+		// Groups require the "member" relation to reference group members
+		optionalRelation = "member"
 	default:
 		return nil, fmt.Errorf("unsupported subject kind: %s", subject.Kind)
 	}
 
-	return &v1.SubjectReference{
+	subjectRef := &v1.SubjectReference{
 		Object: &v1.ObjectReference{
 			ObjectType: objectType,
 			ObjectId:   objectID,
 		},
-	}, nil
+	}
+
+	// Set optional relation if specified (e.g., for groups)
+	if optionalRelation != "" {
+		subjectRef.OptionalRelation = optionalRelation
+	}
+
+	return subjectRef, nil
 }
 
 // convertPermission converts a Permission to SpiceDB relationship updates
 func (t *SpiceDBTransformer) convertPermission(subject *v1.SubjectReference, permission rbacv1alpha1.Permission) ([]*v1.RelationshipUpdate, error) {
-	var updates []*v1.RelationshipUpdate
+	// Use a map to deduplicate relationships based on their string representation
+	// Key format: "resourceType:resourceID#relation@subjectType:subjectID"
+	uniqueRelationships := make(map[string]*v1.RelationshipUpdate)
 
 	// Generate relationships for each combination of clusters, namespaces, and resources
 	clusters := permission.Clusters
@@ -130,24 +162,42 @@ func (t *SpiceDBTransformer) convertPermission(subject *v1.SubjectReference, per
 			for _, resource := range resources {
 				for _, name := range names {
 					resourceType := t.mapResourceType(resource)
-					resourceID := t.buildResourceID(cluster, namespace, name)
+					resourceID := t.buildResourceID(cluster, namespace, resource, name)
 					relation := t.mapRoleToRelation(permission.Role)
 
-					update := &v1.RelationshipUpdate{
-						Operation: v1.RelationshipUpdate_OPERATION_CREATE,
-						Relationship: &v1.Relationship{
-							Resource: &v1.ObjectReference{
-								ObjectType: resourceType,
-								ObjectId:   resourceID,
-							},
-							Relation: relation,
-							Subject:  subject,
-						},
+					// Create a unique key for this relationship
+					subjectRelation := ""
+					if subject.OptionalRelation != "" {
+						subjectRelation = "#" + subject.OptionalRelation
 					}
-					updates = append(updates, update)
+					relationshipKey := fmt.Sprintf("%s:%s#%s@%s:%s%s",
+						resourceType, resourceID, relation,
+						subject.Object.ObjectType, subject.Object.ObjectId, subjectRelation)
+
+					// Only add if we haven't seen this exact relationship before
+					if _, exists := uniqueRelationships[relationshipKey]; !exists {
+						update := &v1.RelationshipUpdate{
+							Operation: v1.RelationshipUpdate_OPERATION_CREATE,
+							Relationship: &v1.Relationship{
+								Resource: &v1.ObjectReference{
+									ObjectType: resourceType,
+									ObjectId:   resourceID,
+								},
+								Relation: relation,
+								Subject:  subject,
+							},
+						}
+						uniqueRelationships[relationshipKey] = update
+					}
 				}
 			}
 		}
+	}
+
+	// Convert map to slice
+	var updates []*v1.RelationshipUpdate
+	for _, update := range uniqueRelationships {
+		updates = append(updates, update)
 	}
 
 	return updates, nil
@@ -207,23 +257,47 @@ func (t *SpiceDBTransformer) mapVerbToPermission(verb string) string {
 }
 
 // buildResourceID creates a hierarchical resource ID for SpiceDB
-func (t *SpiceDBTransformer) buildResourceID(cluster, namespace, name string) string {
+func (t *SpiceDBTransformer) buildResourceID(cluster, namespace, resource, name string) string {
 	var parts []string
 
+	// Handle complete wildcard case - SpiceDB requires alphanumeric ObjectId
+	if cluster == "*" && namespace == "*" && resource == "*" && name == "*" {
+		return "all"
+	}
+
 	if cluster != "" && cluster != "*" {
-		parts = append(parts, "cluster", cluster)
+		sanitized := sanitizeObjectID(cluster)
+		if sanitized != "" {
+			parts = append(parts, "cluster", sanitized)
+		}
 	}
 
 	if namespace != "" && namespace != "*" {
-		parts = append(parts, "namespace", namespace)
+		sanitized := sanitizeObjectID(namespace)
+		if sanitized != "" {
+			parts = append(parts, "namespace", sanitized)
+		}
+	}
+
+	if resource != "" && resource != "*" {
+		sanitized := sanitizeObjectID(resource)
+		if sanitized != "" {
+			parts = append(parts, sanitized)
+		}
 	}
 
 	if name != "" && name != "*" {
-		parts = append(parts, "name", name)
+		sanitized := sanitizeObjectID(name)
+		if sanitized != "" {
+			parts = append(parts, sanitized)
+		}
+	} else if name == "*" && resource != "" && resource != "*" {
+		// When name is wildcard but resource is specified, use _ALL_
+		parts = append(parts, "_ALL_")
 	}
 
 	if len(parts) == 0 {
-		return "*" // Wildcard for all resources
+		return "all" // Wildcard for all resources (SpiceDB requires alphanumeric)
 	}
 
 	return strings.Join(parts, "/")
@@ -264,12 +338,23 @@ func (t *SpiceDBTransformer) CheckPermissionFromRequest(pr *rbacv1alpha1.Permiss
 		subjectType = userType
 	}
 
+	// Sanitize userID to ensure it's valid for SpiceDB
+	sanitizedUserID := sanitizeObjectID(userID)
+	if sanitizedUserID == "" {
+		return nil, fmt.Errorf("invalid userID: cannot be empty after sanitization")
+	}
+
 	checkReq.Subject = &v1.SubjectReference{
 		Object: &v1.ObjectReference{
 			ObjectType: subjectType,
-			ObjectId:   userID,
+			ObjectId:   sanitizedUserID,
 		},
 	}
 
 	return checkReq, nil
+}
+
+// BuildResourceIDWithWildcard builds a resource ID with _ALL_ for wildcard name matching
+func (t *SpiceDBTransformer) BuildResourceIDWithWildcard(cluster, namespace, resource string) string {
+	return t.buildResourceID(cluster, namespace, resource, "*")
 }

@@ -1,0 +1,11 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionRequest
+metadata:
+  name: check-admin-configmap-delete
+spec:
+  group: ""
+  resource: configmaps
+  verb: delete
+  cluster: cluster1
+  namespace: kube-system
+  name: test-config

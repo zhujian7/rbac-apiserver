@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -76,9 +75,9 @@ func newEmbeddedServer(ctx context.Context, bootstrapFilePath string, bootstrapC
 	return server.NewConfigWithOptionsAndDefaults(
 		// Configure gRPC server with buffered network for embedded use
 		server.WithGRPCServer(util.GRPCServerConfig{
-			Network:    util.BufferedNetwork,
-			Enabled:    true,
-			BufferSize: 10 * humanize.MiByte,
+			Network: "tcp",
+			Enabled: true,
+			Address: "localhost:50051",
 		}),
 		// Disable dispatch server (not needed for embedded use)
 		server.WithDispatchServer(util.GRPCServerConfig{Enabled: false}),

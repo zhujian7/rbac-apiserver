@@ -1,0 +1,22 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: developers-group-editor
+spec:
+  subject:
+    kind: Group
+    name: developers
+  permissions:
+    - role: editor
+      resources:
+        - deployments
+        - services
+      groups:
+        - apps
+        - ""
+      namespaces:
+        - development
+      names:
+        - "*"
+      clusters:
+        - cluster1

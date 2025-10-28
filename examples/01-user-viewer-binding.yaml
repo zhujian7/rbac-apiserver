@@ -1,0 +1,20 @@
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionBinding
+metadata:
+  name: alice-pod-viewer
+spec:
+  subject:
+    kind: User
+    name: alice
+  permissions:
+    - role: viewer
+      resources:
+        - pods
+      groups:
+        - ""
+      namespaces:
+        - default
+      names:
+        - "*"
+      clusters:
+        - cluster1
