@@ -12,8 +12,8 @@ import (
 type Interface interface {
 	// PermissionBindings returns a PermissionBindingInformer.
 	PermissionBindings() PermissionBindingInformer
-	// PermissionRequests returns a PermissionRequestInformer.
-	PermissionRequests() PermissionRequestInformer
+	// PermissionReviews returns a PermissionReviewInformer.
+	PermissionReviews() PermissionReviewInformer
 }
 
 type version struct {
@@ -32,7 +32,7 @@ func (v *version) PermissionBindings() PermissionBindingInformer {
 	return &permissionBindingInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
-// PermissionRequests returns a PermissionRequestInformer.
-func (v *version) PermissionRequests() PermissionRequestInformer {
-	return &permissionRequestInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// PermissionReviews returns a PermissionReviewInformer.
+func (v *version) PermissionReviews() PermissionReviewInformer {
+	return &permissionReviewInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

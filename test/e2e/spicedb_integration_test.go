@@ -155,21 +155,21 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 		})
 	})
 
-	Describe("PermissionRequest with SpiceDB Evaluation", func() {
-		var permissionRequestName string
+	Describe("PermissionReview with SpiceDB Evaluation", func() {
+		var permissionReviewName string
 		var permissionBindingName string
 
 		BeforeEach(func() {
-			permissionRequestName = fmt.Sprintf("%s-pr", testNamePrefix)
+			permissionReviewName = fmt.Sprintf("%s-pr", testNamePrefix)
 			permissionBindingName = fmt.Sprintf("%s-pr-binding", testNamePrefix)
 		})
 
 		AfterEach(func() {
-			// Clean up: PermissionRequests are not persisted (CSR-like), but clean up bindings
+			// Clean up: PermissionReviews are not persisted (CSR-like), but clean up bindings
 			_ = rbacClient.AuthorizationV1alpha1().PermissionBindings().Delete(ctx, permissionBindingName, metav1.DeleteOptions{})
 		})
 
-		It("should create PermissionRequest and evaluate with SpiceDB", func() {
+		It("should create PermissionReview and evaluate with SpiceDB", func() {
 			By("Creating a PermissionBinding first to grant permissions")
 			permissionBinding := &rbacv1alpha1.PermissionBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -199,12 +199,12 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			By("Waiting for SpiceDB synchronization")
 			time.Sleep(200 * time.Millisecond)
 
-			By("Creating a PermissionRequest (CSR-like: evaluates immediately)")
-			permissionRequest := &rbacv1alpha1.PermissionRequest{
+			By("Creating a PermissionReview (CSR-like: evaluates immediately)")
+			permissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: permissionRequestName,
+					Name: permissionReviewName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "",
 					Resource:  "pods",
 					Verb:      "get", // Maps to 'view' permission
@@ -214,11 +214,11 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionRequest")
-			Expect(result.GetName()).To(Equal(permissionRequestName))
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, permissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionReview")
+			Expect(result.GetName()).To(Equal(permissionReviewName))
 
-			By("Verifying PermissionRequest was evaluated immediately with status populated")
+			By("Verifying PermissionReview was evaluated immediately with status populated")
 			Expect(result.Spec.Resource).To(Equal("pods"))
 			Expect(result.Spec.Verb).To(Equal("get"))
 
@@ -236,10 +236,10 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			Expect(namespacedName.Names).NotTo(BeEmpty())
 			Expect(namespacedName.Names).To(ContainElement("test-pod"))
 
-			By("Verifying PermissionRequest is NOT persisted (CSR-like behavior)")
+			By("Verifying PermissionReview is NOT persisted (CSR-like behavior)")
 			// Attempting to get the request should fail because it's not stored
-			_, err = rbacClient.AuthorizationV1alpha1().PermissionRequests().Get(ctx, permissionRequestName, metav1.GetOptions{})
-			Expect(err).To(HaveOccurred(), "PermissionRequest should NOT be persisted (CSR-like)")
+			_, err = rbacClient.AuthorizationV1alpha1().PermissionReviews().Get(ctx, permissionReviewName, metav1.GetOptions{})
+			Expect(err).To(HaveOccurred(), "PermissionReview should NOT be persisted (CSR-like)")
 		})
 
 		It("should handle different verbs and resources", func() {
@@ -258,12 +258,12 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			for i, tc := range testCases {
 				By(fmt.Sprintf("Testing verb '%s' on resource '%s' (case %d)", tc.verb, tc.resource, i+1))
 
-				prName := fmt.Sprintf("%s-%d", permissionRequestName, i)
-				permissionRequest := &rbacv1alpha1.PermissionRequest{
+				prName := fmt.Sprintf("%s-%d", permissionReviewName, i)
+				permissionReview := &rbacv1alpha1.PermissionReview{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: prName,
 					},
-					Spec: rbacv1alpha1.PermissionRequestSpec{
+					Spec: rbacv1alpha1.PermissionReviewSpec{
 						Group:     tc.group,
 						Resource:  tc.resource,
 						Verb:      tc.verb,
@@ -272,25 +272,25 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 					},
 				}
 
-				result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
-				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to create PermissionRequest for %s:%s", tc.verb, tc.resource))
+				result, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, permissionReview, metav1.CreateOptions{})
+				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to create PermissionReview for %s:%s", tc.verb, tc.resource))
 				Expect(result.Spec.Verb).To(Equal(tc.verb))
 				Expect(result.Spec.Resource).To(Equal(tc.resource))
 
 				// Verify status is returned immediately (even if empty due to no matching binding)
 				Expect(result.Status).NotTo(BeNil())
 
-				// No cleanup needed - PermissionRequests are not persisted (CSR-like)
+				// No cleanup needed - PermissionReviews are not persisted (CSR-like)
 			}
 		})
 
-		It("should evaluate PermissionRequest with empty status when permission is denied", func() {
-			By("Creating a PermissionRequest WITHOUT a matching PermissionBinding")
-			permissionRequest := &rbacv1alpha1.PermissionRequest{
+		It("should evaluate PermissionReview with empty status when permission is denied", func() {
+			By("Creating a PermissionReview WITHOUT a matching PermissionBinding")
+			permissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: permissionRequestName,
+					Name: permissionReviewName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "",
 					Resource:  "secrets",
 					Verb:      "delete",
@@ -300,10 +300,10 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "PermissionRequest creation should succeed even without matching binding")
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, permissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "PermissionReview creation should succeed even without matching binding")
 
-			By("Verifying PermissionRequest was evaluated with empty/denied status")
+			By("Verifying PermissionReview was evaluated with empty/denied status")
 			Expect(result.Spec.Resource).To(Equal("secrets"))
 			Expect(result.Spec.Verb).To(Equal("delete"))
 
@@ -313,13 +313,13 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 		})
 
 		It("should handle cluster-wide and namespaced requests", func() {
-			By("Creating a cluster-wide PermissionRequest")
-			clusterPRName := fmt.Sprintf("%s-cluster", permissionRequestName)
-			clusterPermissionRequest := &rbacv1alpha1.PermissionRequest{
+			By("Creating a cluster-wide PermissionReview")
+			clusterPRName := fmt.Sprintf("%s-cluster", permissionReviewName)
+			clusterPermissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: clusterPRName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:    "",
 					Resource: "nodes",
 					Verb:     "list",
@@ -328,18 +328,18 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, clusterPermissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to create cluster-wide PermissionRequest")
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, clusterPermissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to create cluster-wide PermissionReview")
 			Expect(result.Spec.Namespace).To(BeEmpty())
 			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated immediately")
 
-			By("Creating a namespaced PermissionRequest")
-			namespacedPRName := fmt.Sprintf("%s-namespaced", permissionRequestName)
-			namespacedPermissionRequest := &rbacv1alpha1.PermissionRequest{
+			By("Creating a namespaced PermissionReview")
+			namespacedPRName := fmt.Sprintf("%s-namespaced", permissionReviewName)
+			namespacedPermissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: namespacedPRName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "apps",
 					Resource:  "deployments",
 					Verb:      "get",
@@ -349,29 +349,29 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			result, err = rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, namespacedPermissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to create namespaced PermissionRequest")
+			result, err = rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, namespacedPermissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to create namespaced PermissionReview")
 			Expect(result.Spec.Namespace).To(Equal("production"))
 			Expect(result.Spec.Name).To(Equal("my-deployment"))
 			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated immediately")
 
-			// No cleanup needed - PermissionRequests are not persisted (CSR-like)
+			// No cleanup needed - PermissionReviews are not persisted (CSR-like)
 		})
 	})
 
 	Describe("Integration Workflow Tests", func() {
 		var (
 			permissionBindingName string
-			permissionRequestName string
+			permissionReviewName string
 		)
 
 		BeforeEach(func() {
 			permissionBindingName = fmt.Sprintf("%s-workflow-pb", testNamePrefix)
-			permissionRequestName = fmt.Sprintf("%s-workflow-pr", testNamePrefix)
+			permissionReviewName = fmt.Sprintf("%s-workflow-pr", testNamePrefix)
 		})
 
 		AfterEach(func() {
-			// Clean up PermissionBindings (PermissionRequests are not persisted)
+			// Clean up PermissionBindings (PermissionReviews are not persisted)
 			_ = rbacClient.AuthorizationV1alpha1().PermissionBindings().Delete(ctx, permissionBindingName, metav1.DeleteOptions{})
 		})
 
@@ -405,12 +405,12 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			By("Waiting a moment for SpiceDB synchronization")
 			time.Sleep(100 * time.Millisecond)
 
-			By("Creating a PermissionRequest that should match the binding")
-			permissionRequest := &rbacv1alpha1.PermissionRequest{
+			By("Creating a PermissionReview that should match the binding")
+			permissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: permissionRequestName,
+					Name: permissionReviewName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "",
 					Resource:  "pods",
 					Verb:      "get", // Should map to 'view' permission
@@ -420,15 +420,15 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			prResult, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionRequest")
+			prResult, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, permissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to create PermissionReview")
 
-			By("Verifying PermissionBinding was created and PermissionRequest was evaluated")
+			By("Verifying PermissionBinding was created and PermissionReview was evaluated")
 			Expect(pbResult.Spec.Subject.Name).To(Equal("charlie"))
 			Expect(prResult.Spec.Resource).To(Equal("pods"))
 			Expect(prResult.Spec.Verb).To(Equal("get"))
 
-			// Verify PermissionRequest status is populated with SpiceDB evaluation
+			// Verify PermissionReview status is populated with SpiceDB evaluation
 			Expect(prResult.Status).NotTo(BeNil(), "Status should be evaluated immediately")
 			// Note: With full SpiceDB integration, status.AllowedList should contain the permitted resources
 		})
@@ -463,12 +463,12 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 			err = rbacClient.AuthorizationV1alpha1().PermissionBindings().Delete(ctx, permissionBindingName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Creating a PermissionRequest after deletion")
-			permissionRequest := &rbacv1alpha1.PermissionRequest{
+			By("Creating a PermissionReview after deletion")
+			permissionReview := &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: permissionRequestName,
+					Name: permissionReviewName,
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "",
 					Resource:  "services",
 					Verb:      "create",
@@ -477,8 +477,8 @@ var _ = Describe("SpiceDB Integration E2E Tests", func() {
 				},
 			}
 
-			result, err := rbacClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, permissionRequest, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "PermissionRequest creation should still work after binding deletion")
+			result, err := rbacClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, permissionReview, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "PermissionReview creation should still work after binding deletion")
 
 			// Verify status is returned immediately (CSR-like behavior)
 			Expect(result.Status).NotTo(BeNil(), "Status should be evaluated even when permission might be denied")

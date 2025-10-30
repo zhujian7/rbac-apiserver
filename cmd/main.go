@@ -30,12 +30,12 @@ var (
 func init() {
 	// Register PermissionBinding API (rbac.open-cluster-management.io/v1alpha1)
 	rbacGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: rbacv1alpha1.APIVersion}
-	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionRequest{}, &rbacv1alpha1.PermissionRequestList{})
+	Scheme.AddKnownTypes(rbacGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionReview{}, &rbacv1alpha1.PermissionReviewList{})
 	metav1.AddToGroupVersion(Scheme, rbacGV)
 
 	// Register internal version types for PATCH operations
 	rbacInternalGV := schema.GroupVersion{Group: rbacv1alpha1.GroupName, Version: runtime.APIVersionInternal}
-	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionRequest{}, &rbacv1alpha1.PermissionRequestList{})
+	Scheme.AddKnownTypes(rbacInternalGV, &rbacv1alpha1.PermissionBinding{}, &rbacv1alpha1.PermissionBindingList{}, &rbacv1alpha1.PermissionReview{}, &rbacv1alpha1.PermissionReviewList{})
 
 	// Register meta types
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
@@ -44,11 +44,11 @@ func init() {
 func installAPI(s *genericapiserver.GenericAPIServer, spiceDBIntegration *integration.SpiceDBIntegration) error {
 	// Install RBAC API (authorization.open-cluster-management.io/v1alpha1)
 	permissionBindingREST := registry.NewPermissionBindingREST(spiceDBIntegration)
-	permissionRequestREST := registry.NewPermissionRequestREST(spiceDBIntegration)
+	permissionReviewREST := registry.NewPermissionReviewREST(spiceDBIntegration)
 
 	rbacStorage := map[string]rest.Storage{
 		"permissionbindings": permissionBindingREST,
-		"permissionrequests": permissionRequestREST,
+		"permissionreviews":  permissionReviewREST,
 	}
 
 	rbacAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(rbacv1alpha1.GroupName, Scheme, metav1.ParameterCodec, Codecs)

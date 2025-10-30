@@ -5,18 +5,18 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// PermissionBinding represents a set of permissions to bind to a subject.
-type PermissionRequest struct {
+// PermissionReview is used to check what permissions a user has on specific resources.
+type PermissionReview struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Spec defines the permission request
-	Spec PermissionRequestSpec `json:"spec,omitempty"`
+	// Spec defines the permission review request
+	Spec PermissionReviewSpec `json:"spec,omitempty"`
 
-	Status PermissionRequestStatus `json:"status,omitempty"`
+	Status PermissionReviewStatus `json:"status,omitempty"`
 }
 
-type PermissionRequestSpec struct {
+type PermissionReviewSpec struct {
 	// grou is the group of the resource
 	Group string `json:"group"`
 
@@ -39,7 +39,7 @@ type PermissionRequestSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
-type PermissionRequestStatus struct {
+type PermissionReviewStatus struct {
 	// allowedList is a list of
 	// +listType=map
 	// +listMapKey=cluster
@@ -62,11 +62,11 @@ type NamespacedName struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// PermissionRequest contains a list of PermissionRequest objects
-type PermissionRequestList struct {
+// PermissionReviewList contains a list of PermissionReview objects
+type PermissionReviewList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// Items is the list of PermissionRequest objects
-	Items []PermissionRequest `json:"items"`
+	// Items is the list of PermissionReview objects
+	Items []PermissionReview `json:"items"`
 }

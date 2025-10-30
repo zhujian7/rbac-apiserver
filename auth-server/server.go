@@ -96,12 +96,12 @@ func (s *AuthServer) HandleAuthorization(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAccessReview) (bool, string, error) {
-	// Create PermissionRequest for hub API
-	pr := &rbacv1alpha1.PermissionRequest{
+	// Create PermissionReview for hub API
+	pr := &rbacv1alpha1.PermissionReview{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: fmt.Sprintf("authz-%s-", s.clusterName),
 		},
-		Spec: rbacv1alpha1.PermissionRequestSpec{
+		Spec: rbacv1alpha1.PermissionReviewSpec{
 			Group:       sar.Spec.ResourceAttributes.Group,
 			Resource:    sar.Spec.ResourceAttributes.Resource,
 			SubResource: sar.Spec.ResourceAttributes.Subresource,
@@ -112,7 +112,7 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 		},
 	}
 
-	klog.V(5).Infof("Creating PermissionRequest on hub for user %s: %+v", sar.Spec.User, pr.Spec)
+	klog.V(5).Infof("Creating PermissionReview on hub for user %s: %+v", sar.Spec.User, pr.Spec)
 
 	// Create a client with user impersonation
 	// This allows the rbac-apiserver to evaluate permissions for the actual user
@@ -136,13 +136,13 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 	}
 
 	// Call hub rbac-apiserver with impersonation
-	// Note: PermissionRequest is ephemeral (like CSR) - it's evaluated immediately and not persisted
-	result, err := impersonatedClient.AuthorizationV1alpha1().PermissionRequests().Create(ctx, pr, metav1.CreateOptions{})
+	// Note: PermissionReview is ephemeral (like CSR) - it's evaluated immediately and not persisted
+	result, err := impersonatedClient.AuthorizationV1alpha1().PermissionReviews().Create(ctx, pr, metav1.CreateOptions{})
 	if err != nil {
-		return false, "", fmt.Errorf("failed to create PermissionRequest: %w", err)
+		return false, "", fmt.Errorf("failed to create PermissionReview: %w", err)
 	}
 
-	klog.Infof("PermissionRequest result for user %s: AllowedList=%+v", sar.Spec.User, result.Status.AllowedList)
+	klog.Infof("PermissionReview result for user %s: AllowedList=%+v", sar.Spec.User, result.Status.AllowedList)
 
 	// Parse status to determine if access is allowed
 	allowed := s.isAllowed(result.Status.AllowedList, pr.Spec)
@@ -153,7 +153,7 @@ func (s *AuthServer) checkPermission(ctx context.Context, sar *authzv1.SubjectAc
 	return allowed, reason, nil
 }
 
-func (s *AuthServer) isAllowed(allowedList []rbacv1alpha1.AllowedItem, spec rbacv1alpha1.PermissionRequestSpec) bool {
+func (s *AuthServer) isAllowed(allowedList []rbacv1alpha1.AllowedItem, spec rbacv1alpha1.PermissionReviewSpec) bool {
 	if len(allowedList) == 0 {
 		klog.V(4).Infof("isAllowed: AllowedList is empty")
 		return false

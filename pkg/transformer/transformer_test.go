@@ -149,23 +149,23 @@ func TestSpiceDBTransformer_TransformPermissionBinding(t *testing.T) {
 	}
 }
 
-func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
+func TestSpiceDBTransformer_TransformPermissionReview(t *testing.T) {
 	transformer := NewSpiceDBTransformer()
 
 	tests := []struct {
 		name               string
-		permissionRequest  *rbacv1alpha1.PermissionRequest
+		permissionReview   *rbacv1alpha1.PermissionReview
 		expectError        bool
 		expectedResource   string
 		expectedPermission string
 	}{
 		{
-			name: "simple permission request",
-			permissionRequest: &rbacv1alpha1.PermissionRequest{
+			name: "simple permission review",
+			permissionReview: &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-request",
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Group:     "v1",
 					Resource:  "pods",
 					Verb:      "get",
@@ -179,12 +179,12 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 			expectedPermission: "view",
 		},
 		{
-			name: "edit permission request",
-			permissionRequest: &rbacv1alpha1.PermissionRequest{
+			name: "edit permission review",
+			permissionReview: &rbacv1alpha1.PermissionReview{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "edit-request",
 				},
-				Spec: rbacv1alpha1.PermissionRequestSpec{
+				Spec: rbacv1alpha1.PermissionReviewSpec{
 					Resource: "services",
 					Verb:     "create",
 					Cluster:  "cluster2",
@@ -195,15 +195,15 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 			expectedPermission: "edit",
 		},
 		{
-			name:              "nil permission request",
-			permissionRequest: nil,
-			expectError:       true,
+			name:             "nil permission review",
+			permissionReview: nil,
+			expectError:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			checkReq, err := transformer.TransformPermissionRequest(tt.permissionRequest)
+			checkReq, err := transformer.TransformPermissionReview(tt.permissionReview)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -221,14 +221,14 @@ func TestSpiceDBTransformer_TransformPermissionRequest(t *testing.T) {
 	}
 }
 
-func TestSpiceDBTransformer_CheckPermissionFromRequest(t *testing.T) {
+func TestSpiceDBTransformer_CheckPermissionFromReview(t *testing.T) {
 	transformer := NewSpiceDBTransformer()
 
-	permissionRequest := &rbacv1alpha1.PermissionRequest{
+	permissionReview := &rbacv1alpha1.PermissionReview{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-request",
 		},
-		Spec: rbacv1alpha1.PermissionRequestSpec{
+		Spec: rbacv1alpha1.PermissionReviewSpec{
 			Resource: "pods",
 			Verb:     "get",
 			Cluster:  "cluster1",
@@ -236,7 +236,7 @@ func TestSpiceDBTransformer_CheckPermissionFromRequest(t *testing.T) {
 		},
 	}
 
-	checkReq, err := transformer.CheckPermissionFromRequest(permissionRequest, "alice", "user")
+	checkReq, err := transformer.CheckPermissionFromReview(permissionReview, "alice", "user")
 	require.NoError(t, err)
 	require.NotNil(t, checkReq)
 
