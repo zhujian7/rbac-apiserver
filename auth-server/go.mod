@@ -50,4 +50,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/stolostron/rbac-apiserver => github.com/zhujian7/rbac-apiserver v0.0.0-20251023144042-fb35430978a5
+replace github.com/stolostron/rbac-apiserver => github.com/zhujian7/rbac-apiserver v0.0.0-20251030095204-cd68c16a7f4c
