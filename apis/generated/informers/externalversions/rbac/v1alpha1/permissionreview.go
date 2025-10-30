@@ -18,70 +18,70 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// PermissionRequestInformer provides access to a shared informer and lister for
-// PermissionRequests.
-type PermissionRequestInformer interface {
+// PermissionReviewInformer provides access to a shared informer and lister for
+// PermissionReviews.
+type PermissionReviewInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() rbacv1alpha1.PermissionRequestLister
+	Lister() rbacv1alpha1.PermissionReviewLister
 }
 
-type permissionRequestInformer struct {
+type permissionReviewInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 }
 
-// NewPermissionRequestInformer constructs a new informer for PermissionRequest type.
+// NewPermissionReviewInformer constructs a new informer for PermissionReview type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewPermissionRequestInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPermissionRequestInformer(client, resyncPeriod, indexers, nil)
+func NewPermissionReviewInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredPermissionReviewInformer(client, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredPermissionRequestInformer constructs a new informer for PermissionRequest type.
+// NewFilteredPermissionReviewInformer constructs a new informer for PermissionReview type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredPermissionRequestInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredPermissionReviewInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuthorizationV1alpha1().PermissionRequests().List(context.Background(), options)
+				return client.AuthorizationV1alpha1().PermissionReviews().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuthorizationV1alpha1().PermissionRequests().Watch(context.Background(), options)
+				return client.AuthorizationV1alpha1().PermissionReviews().Watch(context.Background(), options)
 			},
 			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuthorizationV1alpha1().PermissionRequests().List(ctx, options)
+				return client.AuthorizationV1alpha1().PermissionReviews().List(ctx, options)
 			},
 			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuthorizationV1alpha1().PermissionRequests().Watch(ctx, options)
+				return client.AuthorizationV1alpha1().PermissionReviews().Watch(ctx, options)
 			},
 		},
-		&apisrbacv1alpha1.PermissionRequest{},
+		&apisrbacv1alpha1.PermissionReview{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *permissionRequestInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPermissionRequestInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *permissionReviewInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredPermissionReviewInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *permissionRequestInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apisrbacv1alpha1.PermissionRequest{}, f.defaultInformer)
+func (f *permissionReviewInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&apisrbacv1alpha1.PermissionReview{}, f.defaultInformer)
 }
 
-func (f *permissionRequestInformer) Lister() rbacv1alpha1.PermissionRequestLister {
-	return rbacv1alpha1.NewPermissionRequestLister(f.Informer().GetIndexer())
+func (f *permissionReviewInformer) Lister() rbacv1alpha1.PermissionReviewLister {
+	return rbacv1alpha1.NewPermissionReviewLister(f.Informer().GetIndexer())
 }

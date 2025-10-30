@@ -35,7 +35,7 @@ auth-server/
 ### 1. Authorization Webhook Server (`server.go`)
 
 - Receives `SubjectAccessReview` requests from managed cluster kube-apiserver
-- Transforms them to `PermissionRequest` for hub rbac-apiserver
+- Transforms them to `PermissionReview` for hub rbac-apiserver
 - Parses the response to determine allow/deny
 - Returns authorization decision to managed cluster
 
@@ -43,7 +43,7 @@ auth-server/
 - HTTP/HTTPS server on port 8443
 - Health check endpoint at `/healthz`
 - Authorization endpoint at `/authorize`
-- Automatic cleanup of PermissionRequest objects
+- Automatic cleanup of PermissionReview objects
 - Configurable timeouts and logging
 
 ### 2. POC Setup Script (`poc-setup.sh`)
@@ -78,11 +78,11 @@ Production-ready manifests including:
 │  ┌────────────────────────────────────────────────────────────┐    │
 │  │  rbac-apiserver                                            │    │
 │  │  - PermissionBinding API (stores permissions)              │    │
-│  │  - PermissionRequest API (evaluates permissions)           │    │
+│  │  - PermissionReview API (evaluates permissions)           │    │
 │  │  - SpiceDB backend (relationship store)                    │    │
 │  └────────────────────────────────────────────────────────────┘    │
 │                            ▲                                        │
-│                            │ HTTPS (PermissionRequest API)          │
+│                            │ HTTPS (PermissionReview API)          │
 └────────────────────────────┼───────────────────────────────────────┘
                              │
                              │
@@ -104,13 +104,13 @@ Production-ready manifests including:
 1. User makes request to managed cluster (e.g., `kubectl get pods --as=alice`)
 2. Managed cluster kube-apiserver calls authorization webhook
 3. Auth-server receives `SubjectAccessReview`
-4. Auth-server creates `PermissionRequest` on hub rbac-apiserver
+4. Auth-server creates `PermissionReview` on hub rbac-apiserver
 5. Hub rbac-apiserver evaluates against SpiceDB
 6. Hub returns status with allowed resources
 7. Auth-server parses response and determines allow/deny
 8. Auth-server responds to webhook
 9. Managed cluster enforces the decision
-10. Auth-server cleans up PermissionRequest object
+10. Auth-server cleans up PermissionReview object
 
 ## Quick Start
 
@@ -140,12 +140,12 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 
 ### 1. User Context Hardcoded in Hub API
 
-**Issue**: The rbac-apiserver currently hardcodes the user to `system:admin` when processing PermissionRequests (see `pkg/registry/permissionrequest_rest.go:75`).
+**Issue**: The rbac-apiserver currently hardcodes the user to `system:admin` when processing PermissionReviews (see `pkg/registry/permissionreview_rest.go:75`).
 
 **Impact**: All authorization checks evaluate against `system:admin` permissions, not the actual requesting user.
 
 **Workaround**: None currently. This needs to be fixed in rbac-apiserver by:
-- Adding `user` field to `PermissionRequestSpec`
+- Adding `user` field to `PermissionReviewSpec`
 - Extracting user from request context
 - Passing user to SpiceDB integration
 
@@ -153,7 +153,7 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 
 ### 2. Performance
 
-**Issue**: Each authorization check creates and deletes a PermissionRequest object.
+**Issue**: Each authorization check creates and deletes a PermissionReview object.
 
 **Impact**: Higher latency and API server load for high-frequency authorization checks.
 
@@ -203,8 +203,8 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 kubectl config use-context kind-hub
 kubectl logs -n rbac-apiserver-system deployment/rbac-apiserver
 
-# Check PermissionRequests (should be cleaned up)
-kubectl get permissionrequests -w
+# Check PermissionReviews (should be cleaned up)
+kubectl get permissionreviews -w
 ```
 
 ## Configuration
@@ -231,7 +231,7 @@ kubectl get permissionrequests -w
 
 ### Phase 1: Fix User Context (rbac-apiserver)
 
-1. Add `user` field to `PermissionRequestSpec`
+1. Add `user` field to `PermissionReviewSpec`
 2. Extract user from request context
 3. Pass to SpiceDB integration
 4. Update auth-server to include user in requests

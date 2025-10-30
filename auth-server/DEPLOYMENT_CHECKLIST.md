@@ -41,7 +41,7 @@
 - [ ] Managed auth-server health check passing
 - [ ] Auth-server can connect to hub
 - [ ] Webhook is being called (check logs)
-- [ ] PermissionRequest objects created and cleaned up
+- [ ] PermissionReview objects created and cleaned up
 
 ### Testing
 - [ ] PermissionBinding created on hub
@@ -165,7 +165,7 @@
 - [ ] Verify cache hit rates
 - [ ] Review authorization decisions
 - [ ] Check for any denied requests
-- [ ] Verify PermissionRequest cleanup
+- [ ] Verify PermissionReview cleanup
 
 ### Medium Term (First Week)
 - [ ] Performance metrics stable

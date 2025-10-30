@@ -101,7 +101,7 @@ You should see logs like:
 ```
 I1027 10:00:00.000000       1 server.go:XX] Starting authorization webhook server for cluster managed-cluster on :8443
 I1027 10:00:01.000000       1 server.go:XX] Authorization request: user=alice, resource=/pods, verb=get, namespace=default
-I1027 10:00:01.000000       1 server.go:XX] Creating PermissionRequest on hub
+I1027 10:00:01.000000       1 server.go:XX] Creating PermissionReview on hub
 I1027 10:00:01.000000       1 server.go:XX] Authorization result for user alice: allowed=true
 ```
 
@@ -150,13 +150,13 @@ When you run `kubectl auth can-i get pods --as=alice`:
 1. **Managed cluster kube-apiserver** receives the authorization check
 2. **Managed cluster kube-apiserver** calls the authorization webhook (auth-server)
 3. **Auth-server** receives the SubjectAccessReview request
-4. **Auth-server** creates a PermissionRequest on the hub rbac-apiserver
+4. **Auth-server** creates a PermissionReview on the hub rbac-apiserver
 5. **Hub rbac-apiserver** evaluates against SpiceDB
 6. **Hub rbac-apiserver** returns the status (allowed list)
 7. **Auth-server** parses the response and determines allow/deny
 8. **Auth-server** responds to the webhook with allow/deny
 9. **Managed cluster kube-apiserver** enforces the decision
-10. **Auth-server** deletes the PermissionRequest (cleanup)
+10. **Auth-server** deletes the PermissionReview (cleanup)
 
 ## Next Steps
 

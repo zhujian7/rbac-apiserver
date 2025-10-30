@@ -12,7 +12,7 @@ This guide provides runnable examples for using the RBAC API Server with embedde
 - [Example 3: Multi-Cluster Permissions](#example-3-multi-cluster-permissions)
 - [Example 4: Wildcard Permissions](#example-4-wildcard-permissions)
 - [Understanding PermissionBindings](#understanding-permissionbindings)
-- [Understanding PermissionRequests](#understanding-permissionrequests)
+- [Understanding PermissionReviews](#understanding-permissionreviews)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -20,7 +20,7 @@ This guide provides runnable examples for using the RBAC API Server with embedde
 The RBAC API Server provides two main custom resources:
 
 1. **PermissionBinding**: Defines what permissions a user or group has on resources across clusters
-2. **PermissionRequest**: Queries whether a user has permission to perform an action on a resource
+2. **PermissionReview**: Queries whether a user has permission to perform an action on a resource
 
 The API server uses embedded SpiceDB to store and evaluate these permissions in real-time.
 
@@ -45,7 +45,7 @@ kubectl api-resources | grep authorization.open-cluster-management.io
 Expected output:
 ```
 permissionbindings          authorization.open-cluster-management.io/v1alpha1   false   PermissionBinding
-permissionrequests          authorization.open-cluster-management.io/v1alpha1   false   PermissionRequest
+permissionreviews          authorization.open-cluster-management.io/v1alpha1   false   PermissionReview
 ```
 
 ## Example 1: Basic User Permission
@@ -75,9 +75,9 @@ kubectl get permissionbindings
 kubectl get permissionbinding alice-pod-viewer -o yaml
 ```
 
-### Step 3: Create a PermissionRequest to Check Access
+### Step 3: Create a PermissionReview to Check Access
 
-Apply the example PermissionRequest to check if alice can view a pod:
+Apply the example PermissionReview to check if alice can view a pod:
 
 ```bash
 kubectl apply -f examples/02-check-user-view-access.yaml
@@ -94,10 +94,10 @@ See [examples/02-check-user-view-access.yaml](examples/02-check-user-view-access
 ### Step 4: View the Result
 
 ```bash
-kubectl get permissionrequest check-alice-pod-view -o yaml
+kubectl get permissionreview check-alice-pod-view -o yaml
 ```
 
-The PermissionRequest object will be created and processed by the API server. The status field will contain the evaluation results from SpiceDB:
+The PermissionReview object will be created and processed by the API server. The status field will contain the evaluation results from SpiceDB:
 
 ```yaml
 status:
@@ -115,7 +115,7 @@ Since alice has viewer role and the wildcard matching is enabled, the status sho
 
 ```bash
 kubectl delete permissionbinding alice-pod-viewer
-kubectl delete permissionrequest check-alice-pod-view
+kubectl delete permissionreview check-alice-pod-view
 ```
 
 ## Example 2: Group Permissions
@@ -258,15 +258,15 @@ spec:
 - **User**: Individual user (referenced as `user:username` in SpiceDB)
 - **Group**: Group of users (referenced as `group:groupname#member` in SpiceDB)
 
-## Understanding PermissionRequests
+## Understanding PermissionReviews
 
-### How PermissionRequests Work (CSR-like Pattern)
+### How PermissionReviews Work (CSR-like Pattern)
 
-PermissionRequests work similarly to Kubernetes CertificateSigningRequests (CSR):
+PermissionReviews work similarly to Kubernetes CertificateSigningRequests (CSR):
 
-- **Immediate Evaluation**: When you create a PermissionRequest, it is evaluated immediately against SpiceDB
+- **Immediate Evaluation**: When you create a PermissionReview, it is evaluated immediately against SpiceDB
 - **Not Persisted**: The request is NOT stored in etcd - it's evaluated and returned immediately
-- **No Get/List Operations**: You cannot use `kubectl get permissionrequest` to retrieve past requests
+- **No Get/List Operations**: You cannot use `kubectl get permissionreview` to retrieve past requests
 - **User Context**: The requesting user is extracted from the Kubernetes request context using the `--as` flag
 
 ### Usage Pattern
@@ -281,15 +281,15 @@ The command returns immediately with the evaluation result in the status field.
 
 ### Required RBAC Permissions
 
-Before users can create PermissionRequests, they need Kubernetes RBAC permissions:
+Before users can create PermissionReviews, they need Kubernetes RBAC permissions:
 
 ```bash
-kubectl apply -f examples/01-permissionrequests-assign.yaml
+kubectl apply -f examples/01-permissionreviews-assign.yaml
 ```
 
-This grants the user permission to create PermissionRequest resources in the API server.
+This grants the user permission to create PermissionReview resources in the API server.
 
-### PermissionRequest Spec
+### PermissionReview Spec
 
 ```yaml
 spec:
@@ -306,9 +306,9 @@ spec:
 - **get, list, watch** → maps to **view** permission
 - **create, update, patch, delete** → maps to **edit** permission
 
-### PermissionRequest Status
+### PermissionReview Status
 
-After processing, the PermissionRequest status will contain:
+After processing, the PermissionReview status will contain:
 
 ```yaml
 status:
@@ -355,14 +355,14 @@ kubectl logs -n rbac-apiserver-system $POD_NAME -f
    - Verify SpiceDB is running in the pod
    - Check for validation errors
 
-2. **PermissionRequest returns empty status**
-   - Ensure the user has Kubernetes RBAC permissions to create PermissionRequests (see examples/01-permissionrequests-assign.yaml)
+2. **PermissionReview returns empty status**
+   - Ensure the user has Kubernetes RBAC permissions to create PermissionReviews (see examples/01-permissionreviews-assign.yaml)
    - Verify you're using `kubectl create` with the `--as` flag to specify the user
    - Check that the resource names, cluster, and namespace match the PermissionBinding
    - Ensure PermissionBindings have been created and synced to SpiceDB first
 
-3. **Cannot retrieve PermissionRequest with kubectl get**
-   - This is expected behavior - PermissionRequests are NOT persisted
+3. **Cannot retrieve PermissionReview with kubectl get**
+   - This is expected behavior - PermissionReviews are NOT persisted
    - They work like CSR (CertificateSigningRequest) and are evaluated immediately
    - Use `kubectl create -o yaml` to see the immediate evaluation result
 

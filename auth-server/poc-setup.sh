@@ -142,16 +142,16 @@ deploy_managed_auth_server() {
     HUB_CA=$(kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
     HUB_TOKEN=$(kubectl create token default -n default --duration=87600h)
 
-    # Create RBAC permissions for auth-server to call PermissionRequest API
-    echo_info "Creating RBAC for PermissionRequest API access and impersonation..."
+    # Create RBAC permissions for auth-server to call PermissionReview API
+    echo_info "Creating RBAC for PermissionReview API access and impersonation..."
     cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: permissionrequest-creator
+  name: permissionreview-creator
 rules:
 - apiGroups: ["authorization.open-cluster-management.io"]
-  resources: ["permissionrequests"]
+  resources: ["permissionreviews"]
   verbs: ["create", "get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -166,14 +166,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: default-permissionrequest-creator
+  name: default-permissionreview-creator
 subjects:
 - kind: ServiceAccount
   name: default
   namespace: default
 roleRef:
   kind: ClusterRole
-  name: permissionrequest-creator
+  name: permissionreview-creator
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -192,14 +192,14 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: permissionrequest-creator
+  name: permissionreview-creator
 subjects:
 - kind: Group
   name: system:authenticated
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: permissionrequest-creator
+  name: permissionreview-creator
   apiGroup: rbac.authorization.k8s.io
 EOF
 

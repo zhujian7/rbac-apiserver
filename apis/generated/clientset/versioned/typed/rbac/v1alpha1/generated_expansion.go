@@ -6,4 +6,4 @@ package v1alpha1
 
 type PermissionBindingExpansion interface{}
 
-type PermissionRequestExpansion interface{}
+type PermissionReviewExpansion interface{}

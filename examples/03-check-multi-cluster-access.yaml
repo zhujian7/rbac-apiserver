@@ -1,5 +1,5 @@
 apiVersion: authorization.open-cluster-management.io/v1alpha1
-kind: PermissionRequest
+kind: PermissionReview
 metadata:
   name: check-bob-cluster1-production
 spec:

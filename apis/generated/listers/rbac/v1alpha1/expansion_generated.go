@@ -8,6 +8,6 @@ package v1alpha1
 // PermissionBindingLister.
 type PermissionBindingListerExpansion interface{}
 
-// PermissionRequestListerExpansion allows custom methods to be added to
-// PermissionRequestLister.
-type PermissionRequestListerExpansion interface{}
+// PermissionReviewListerExpansion allows custom methods to be added to
+// PermissionReviewLister.
+type PermissionReviewListerExpansion interface{}

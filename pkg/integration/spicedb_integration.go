@@ -98,14 +98,14 @@ func (s *SpiceDBIntegration) DeletePermissionBinding(ctx context.Context, pb *rb
 	return nil
 }
 
-// EvaluatePermissionRequest evaluates a PermissionRequest against SpiceDB
-func (s *SpiceDBIntegration) EvaluatePermissionRequest(ctx context.Context, pr *rbacv1alpha1.PermissionRequest, userID, userType string) (*v1.CheckPermissionResponse, error) {
-	klog.Infof("Evaluating PermissionRequest %s for user %s", pr.Name, userID)
+// EvaluatePermissionReview evaluates a PermissionReview against SpiceDB
+func (s *SpiceDBIntegration) EvaluatePermissionReview(ctx context.Context, pr *rbacv1alpha1.PermissionReview, userID, userType string) (*v1.CheckPermissionResponse, error) {
+	klog.Infof("Evaluating PermissionReview %s for user %s", pr.Name, userID)
 
-	// Transform PermissionRequest to SpiceDB check request
-	checkReq, err := s.transformer.CheckPermissionFromRequest(pr, userID, userType)
+	// Transform PermissionReview to SpiceDB check request
+	checkReq, err := s.transformer.CheckPermissionFromReview(pr, userID, userType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to transform PermissionRequest: %w", err)
+		return nil, fmt.Errorf("failed to transform PermissionReview: %w", err)
 	}
 
 	klog.Infof("Checking permission: resourceType=%s, resourceID=%s, permission=%s, subject=%s:%s",
@@ -156,14 +156,14 @@ func (s *SpiceDBIntegration) EvaluatePermissionRequest(ctx context.Context, pr *
 	return response, nil
 }
 
-// ProcessPermissionRequestStatus updates the status of a PermissionRequest based on SpiceDB evaluation
-func (s *SpiceDBIntegration) ProcessPermissionRequestStatus(ctx context.Context, pr *rbacv1alpha1.PermissionRequest, userID, userType string) error {
-	klog.Infof("Processing PermissionRequest status for %s, userID=%s, spec=%+v", pr.Name, userID, pr.Spec)
+// ProcessPermissionReviewStatus updates the status of a PermissionReview based on SpiceDB evaluation
+func (s *SpiceDBIntegration) ProcessPermissionReviewStatus(ctx context.Context, pr *rbacv1alpha1.PermissionReview, userID, userType string) error {
+	klog.Infof("Processing PermissionReview status for %s, userID=%s, spec=%+v", pr.Name, userID, pr.Spec)
 
-	// Evaluate the permission request
-	response, err := s.EvaluatePermissionRequest(ctx, pr, userID, userType)
+	// Evaluate the permission review
+	response, err := s.EvaluatePermissionReview(ctx, pr, userID, userType)
 	if err != nil {
-		return fmt.Errorf("failed to evaluate permission request: %w", err)
+		return fmt.Errorf("failed to evaluate permission review: %w", err)
 	}
 
 	klog.Infof("Permission evaluation result for %s: permissionship=%v", pr.Name, response.Permissionship)
@@ -214,7 +214,7 @@ func (s *SpiceDBIntegration) ProcessPermissionRequestStatus(ctx context.Context,
 		}
 	}
 
-	klog.Infof("Successfully processed PermissionRequest status for %s, final status=%+v", pr.Name, pr.Status)
+	klog.Infof("Successfully processed PermissionReview status for %s, final status=%+v", pr.Name, pr.Status)
 	return nil
 }
 

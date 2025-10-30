@@ -5,23 +5,23 @@ This is an authorization webhook server that integrates with the rbac-apiserver 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                            Hub Cluster                              │
-│                                                                     │
-│  ┌────────────────────────────────────────────────────────────┐    │
-│  │  rbac-apiserver                                            │    │
-│  │  - PermissionBinding API                                   │    │
-│  │  - PermissionRequest API                                   │    │
-│  │  - SpiceDB backend                                         │    │
-│  └────────────────────────────────────────────────────────────┘    │
-│                            ▲                                        │
-│                            │ HTTPS                                  │
+┌────────────────────────────────────────────────────────────────────┐
+│                            Hub Cluster                             │
+│                                                                    │
+│   ┌────────────────────────────────────────────────────────────┐   │
+│   │  rbac-apiserver                                            │   │
+│   │  - PermissionBinding API                                   │   │
+│   │  - PermissionReview API                                    │   │
+│   │  - SpiceDB backend                                         │   │
+│   └────────────────────────────────────────────────────────────┘   │
+│                            ▲                                       │
+│                            │ HTTPS                                 │
 └────────────────────────────┼───────────────────────────────────────┘
                              │
                              │
 ┌────────────────────────────┼───────────────────────────────────────┐
 │                   Managed Cluster                                  │
-│                            │                                        │
+│                            │                                       │
 │  ┌──────────────────┐      │      ┌─────────────────────────────┐  │
 │  │  kube-apiserver  │──────┼─────▶│  auth-server (this addon)   │  │
 │  │                  │      │      │  - Receives webhook calls   │  │
@@ -178,17 +178,17 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 You should see logs like:
 ```
 I1027 10:00:00.000000       1 server.go:XX] Authorization request: user=alice, resource=/pods, verb=get, namespace=default
-I1027 10:00:00.000000       1 server.go:XX] Creating PermissionRequest on hub
+I1027 10:00:00.000000       1 server.go:XX] Creating PermissionReview on hub
 I1027 10:00:00.000000       1 server.go:XX] Authorization result for user alice: allowed=true
 ```
 
 ### 4. Verify on Hub
 
-Check PermissionRequests being created (they are automatically cleaned up):
+Check PermissionReviews being created (they are automatically cleaned up):
 
 ```bash
 kubectl config use-context kind-hub
-kubectl get permissionrequests -A -w
+kubectl get permissionreviews -A -w
 ```
 
 ## Development
@@ -269,7 +269,7 @@ This allows the kube-apiserver to verify the certificate using its trusted CA bu
 
 ## Known Limitations
 
-1. **Performance**: Each authorization check creates and deletes a PermissionRequest object on the hub. For high-frequency workloads, consider implementing caching.
+1. **Performance**: Each authorization check creates and deletes a PermissionReview object on the hub. For high-frequency workloads, consider implementing caching.
 
 2. **HA**: While the deployment runs 2 replicas, proper HA testing has not been performed.
 
@@ -315,7 +315,7 @@ kind delete cluster --name hub
 
 ## Next Steps
 
-1. Update rbac-apiserver to accept user context in PermissionRequest
+1. Update rbac-apiserver to accept user context in PermissionReview
 2. Implement caching for authorization decisions
 3. Add metrics and monitoring
 4. Implement proper client certificate authentication

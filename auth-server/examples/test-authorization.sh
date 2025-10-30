@@ -138,15 +138,15 @@ echo_test "Checking auth-server logs for recent authorization requests..."
 kubectl logs -n auth-server-system deployment/auth-server --tail=30
 echo ""
 
-# Test 7: Verify PermissionRequests on hub
-echo_test "Checking for PermissionRequests on hub (should be cleaned up)..."
+# Test 7: Verify PermissionReviews on hub
+echo_test "Checking for PermissionReviews on hub (should be cleaned up)..."
 kubectl config use-context kind-hub
 
-PR_COUNT=$(kubectl get permissionrequests 2>/dev/null | grep -c authz- || true)
+PR_COUNT=$(kubectl get permissionreviews 2>/dev/null | grep -c authz- || true)
 if [ "$PR_COUNT" -eq 0 ]; then
-    echo_pass "PermissionRequests are properly cleaned up"
+    echo_pass "PermissionReviews are properly cleaned up"
 else
-    echo_fail "Found $PR_COUNT PermissionRequests (may indicate cleanup issue)"
+    echo_fail "Found $PR_COUNT PermissionReviews (may indicate cleanup issue)"
 fi
 echo ""
 

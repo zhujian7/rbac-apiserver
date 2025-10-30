@@ -64,11 +64,11 @@ func (t *SpiceDBTransformer) TransformPermissionBinding(pb *rbacv1alpha1.Permiss
 	return updates, nil
 }
 
-// TransformPermissionRequest evaluates a PermissionRequest against SpiceDB
+// TransformPermissionReview evaluates a PermissionReview against SpiceDB
 // This returns the resource patterns that should be checked
-func (t *SpiceDBTransformer) TransformPermissionRequest(pr *rbacv1alpha1.PermissionRequest) (*v1.CheckPermissionRequest, error) {
+func (t *SpiceDBTransformer) TransformPermissionReview(pr *rbacv1alpha1.PermissionReview) (*v1.CheckPermissionRequest, error) {
 	if pr == nil {
-		return nil, fmt.Errorf("PermissionRequest cannot be nil")
+		return nil, fmt.Errorf("PermissionReview cannot be nil")
 	}
 
 	// Build resource reference
@@ -78,7 +78,7 @@ func (t *SpiceDBTransformer) TransformPermissionRequest(pr *rbacv1alpha1.Permiss
 	// Map verb to permission
 	permission := t.mapVerbToPermission(pr.Spec.Verb)
 
-	// For PermissionRequest, we need to know who is making the request
+	// For PermissionReview, we need to know who is making the request
 	// This would typically come from the request context
 	// For now, we'll create a placeholder that can be filled in by the caller
 	return &v1.CheckPermissionRequest{
@@ -324,10 +324,10 @@ func (t *SpiceDBTransformer) CreateRelationshipUpdatesForDeletion(pb *rbacv1alph
 	return deleteUpdates, nil
 }
 
-// CheckPermissionFromRequest checks if a permission request should be allowed
+// CheckPermissionFromReview checks if a permission review should be allowed
 // This is a helper method that creates the check request with a subject
-func (t *SpiceDBTransformer) CheckPermissionFromRequest(pr *rbacv1alpha1.PermissionRequest, userID string, userType string) (*v1.CheckPermissionRequest, error) {
-	checkReq, err := t.TransformPermissionRequest(pr)
+func (t *SpiceDBTransformer) CheckPermissionFromReview(pr *rbacv1alpha1.PermissionReview, userID string, userType string) (*v1.CheckPermissionRequest, error) {
+	checkReq, err := t.TransformPermissionReview(pr)
 	if err != nil {
 		return nil, err
 	}

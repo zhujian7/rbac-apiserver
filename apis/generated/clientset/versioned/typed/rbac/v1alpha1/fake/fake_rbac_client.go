@@ -18,8 +18,8 @@ func (c *FakeAuthorizationV1alpha1) PermissionBindings() v1alpha1.PermissionBind
 	return newFakePermissionBindings(c)
 }
 
-func (c *FakeAuthorizationV1alpha1) PermissionRequests() v1alpha1.PermissionRequestInterface {
-	return newFakePermissionRequests(c)
+func (c *FakeAuthorizationV1alpha1) PermissionReviews() v1alpha1.PermissionReviewInterface {
+	return newFakePermissionReviews(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
