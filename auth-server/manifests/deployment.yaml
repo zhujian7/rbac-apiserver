@@ -28,7 +28,7 @@ spec:
         - --v=4
         env:
         - name: CLUSTER_NAME
-          value: "managed-cluster"
+          value: "cluster1"
         ports:
         - containerPort: 8443
           name: https

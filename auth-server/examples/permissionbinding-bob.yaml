@@ -1,16 +1,17 @@
 apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: PermissionBinding
 metadata:
-  name: bob-viewer-permissions
+  name: bob-multi-cluster-admin
 spec:
   subject:
     kind: User
     name: bob
   permissions:
-  # Allow bob to view pods in default namespace only
-  - resources: ["pods"]
-    groups: [""]
-    namespaces: ["default"]
+  # Allow bob to admin pods, deployments, and services across cluster1 and cluster2
+  # This matches the example in ./examples/03-multi-cluster-binding.yaml
+  - resources: ["pods", "deployments", "services"]
+    groups: ["", "apps"]
+    namespaces: ["production", "staging"]
     names: ["*"]
-    role: "viewer"
-    clusters: ["managed-cluster"]
+    role: "admin"
+    clusters: ["cluster1", "cluster2"]

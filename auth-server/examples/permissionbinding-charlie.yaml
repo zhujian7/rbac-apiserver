@@ -7,11 +7,12 @@ spec:
     kind: User
     name: charlie
   permissions:
-  # Charlie has permissions on a different cluster, not "managed-cluster"
-  # This will cause auth-server to return NoOpinion for requests to "managed-cluster"
+  # Charlie has permissions on cluster3, not cluster1
+  # This will cause auth-server to return NoOpinion for requests to cluster1
+  # This demonstrates cluster-specific permission enforcement
   - resources: ["pods"]
     groups: [""]
     namespaces: ["default"]
     names: ["*"]
     role: "admin"
-    clusters: ["other-cluster"]
+    clusters: ["cluster3"]

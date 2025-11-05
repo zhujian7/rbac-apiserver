@@ -147,6 +147,7 @@ kubectl config use-context kind-hub
 # Apply example PermissionBindings
 kubectl apply -f auth-server/examples/permissionbinding-alice.yaml
 kubectl apply -f auth-server/examples/permissionbinding-bob.yaml
+kubectl apply -f auth-server/examples/permissionbinding-charlie.yaml
 ```
 
 ### 2. Test Authorization on Managed Cluster
@@ -156,17 +157,20 @@ The auth-server implements NoOpinion authorization, allowing both hub and local 
 ```bash
 kubectl config use-context kind-managed
 
-# Test as alice (has PermissionBinding on hub)
+# Test as alice (viewer role for pods on cluster1)
 kubectl auth can-i get pods --as=alice -n default
 # Expected: yes (authorized via hub policy)
 
-# Test as bob (no hub policy, but may have local RBAC)
-kubectl auth can-i get pods --as=bob -n default
-# Expected: depends on local RoleBindings (NoOpinion defers to RBAC)
+# Test as bob (admin role for production/staging namespaces on cluster1)
+kubectl create namespace production
+kubectl auth can-i create deployments --as=bob -n production
+# Expected: yes (authorized via hub policy)
 
-# Test as charlie (no hub policy, no local RBAC)
+# Test as charlie (no permissions on cluster1, has permissions on cluster3)
+# When NoOpinion is returned, falls back to native RBAC
+kubectl apply -f examples/charlie-native-rbac.yaml
 kubectl auth can-i get pods --as=charlie -n default
-# Expected: no (NoOpinion → RBAC checks → denied)
+# Expected: yes (via native Kubernetes RBAC)
 ```
 
 ### 3. Check Auth-Server Logs
@@ -177,9 +181,10 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 
 You should see logs like:
 ```
-I1027 10:00:00.000000       1 server.go:XX] Authorization request: user=alice, resource=/pods, verb=get, namespace=default
-I1027 10:00:00.000000       1 server.go:XX] Creating PermissionReview on hub
-I1027 10:00:00.000000       1 server.go:XX] Authorization result for user alice: allowed=true
+I1104 08:06:04.150935       1 main.go:37] Starting authorization webhook server for cluster cluster1 on :8443
+I1104 08:09:02.904274       1 server.go:72] Authorization request: user=alice, resource=/pods, verb=get, namespace=default, name=
+I1104 08:09:03.039002       1 server.go:145] PermissionReview result for user alice: AllowedList=[{Cluster:cluster1 NamespacedNames:[{Names:[] Namespace:default}]}]
+I1104 08:09:03.039284       1 server.go:152] Authorization result for user alice: allowed=true
 ```
 
 ### 4. Verify on Hub

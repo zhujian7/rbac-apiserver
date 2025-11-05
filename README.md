@@ -8,8 +8,9 @@ This project implements a standalone API server that extends the Kubernetes API 
 
 ## Features
 
-- **Relationship API** (`authorization.open-cluster-management.io/v1alpha1`) - Multi-cluster RBAC relationships based on SpiceDB tuple model
-- **In-memory storage** backend for development and testing
+- **PermissionBinding API** (`authorization.open-cluster-management.io/v1alpha1`) - Multi-cluster RBAC permission bindings backed by embedded SpiceDB
+- **PermissionReview API** (`authorization.open-cluster-management.io/v1alpha1`) - Permission check requests evaluated immediately (CSR-like pattern)
+- **Embedded SpiceDB** for real-time authorization evaluation
 - **OpenAPI schema generation** for automatic API documentation
 - **Helm chart deployment** with flexible TLS configuration
 - **Optional cert-manager integration** for automatic certificate management
@@ -19,22 +20,25 @@ This project implements a standalone API server that extends the Kubernetes API 
 ## Architecture
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────┐
-│                         Kubernetes Cluster                                     │
-│                                                                                │
-│   ┌──────────────────┐                  ┌──────────────────────────────────┐   │
-│   │  kube-apiserver  │─────────────────▶│  rbac-apiserver (aggregated)     │   │
-│   │                  │                  │                                  │   │
-│   │  APIServices:    │                  │  Relationship API:               │   │
-│   │  - v1alpha1.     │                  │    authorization.open-cluster-   │   │
-│   │    authorization │                  │    management.io/v1alpha1        │   │
-│   │    .open-cluster │                  │                                  │   │
-│   │    -management   │                  │  Resources:                      │   │
-│   │    .io           │                  │  - Relationships                 │   │
-│   │                  │                  │                                  │   │
-│   └──────────────────┘                  └──────────────────────────────────┘   │
-│                                                                                │
-└────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                         Kubernetes Cluster                                       │
+│                                                                                  │
+│   ┌──────────────────┐                  ┌────────────────────────────────────┐   │
+│   │  kube-apiserver  │─────────────────▶│  rbac-apiserver (aggregated)       │   │
+│   │                  │                  │                                    │   │
+│   │  APIServices:    │                  │  Authorization API:                │   │
+│   │  - v1alpha1.     │                  │    authorization.open-cluster-     │   │
+│   │    authorization │                  │    management.io/v1alpha1          │   │
+│   │    .open-cluster │                  │                                    │   │
+│   │    -management   │                  │  Resources:                        │   │
+│   │    .io           │                  │  - PermissionBindings              │   │
+│   │                  │                  │  - PermissionReviews (CSR-like)    │   │
+│   │                  │                  │                                    │   │
+│   │                  │                  │  Backend: Embedded SpiceDB         │   │
+│   │                  │                  │                                    │   │
+│   └──────────────────┘                  └────────────────────────────────────┘   │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Prerequisites
@@ -96,26 +100,47 @@ helm install rbac-apiserver charts/rbac-apiserver/ \
 # Check APIService status
 kubectl get apiservices v1alpha1.authorization.open-cluster-management.io
 
-# Create a test Relationship
+# Create a test PermissionBinding
 kubectl apply -f - <<EOF
 apiVersion: authorization.open-cluster-management.io/v1alpha1
-kind: Relationship
+kind: PermissionBinding
 metadata:
-  name: test-relationship
+  name: test-binding
 spec:
-  tuples:
-  - resource:
-      objectType: "resource"
-      objectId: "cluster/cluster1/namespace/default"
-    relation: "admin"
-    subject:
-      object:
-        objectType: "user"
-        objectId: "user1"
+  subject:
+    kind: User
+    name: alice
+  permissions:
+    - role: viewer
+      resources:
+        - pods
+      groups:
+        - ""
+      namespaces:
+        - default
+      names:
+        - "*"
+      clusters:
+        - cluster1
 EOF
 
-# List Relationships
-kubectl get relationships
+# List PermissionBindings
+kubectl get permissionbindings
+
+# Check permissions with PermissionReview
+kubectl create -f - <<EOF
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionReview
+metadata:
+  name: check-alice-access
+spec:
+  group: ""
+  resource: pods
+  verb: get
+  cluster: cluster1
+  namespace: default
+  name: my-pod
+EOF
 ```
 
 ## Development
@@ -126,17 +151,19 @@ kubectl get relationships
 .
 ├── apis/                       # API definitions
 │   ├── generated/             # Generated client, informers, listers, and OpenAPI specs
-│   └── rbac/                  # Relationship API (authorization.open-cluster-management.io)
-│       └── v1alpha1/         # v1alpha1 API version
+│   └── rbac/                  # Authorization API (authorization.open-cluster-management.io)
+│       └── v1alpha1/         # v1alpha1 API version (PermissionBinding, PermissionReview)
 ├── charts/                    # Helm charts
 │   └── rbac-apiserver/       # Main Helm chart
 ├── cmd/                       # Main application entry point
 ├── pkg/                       # Core packages
 │   ├── registry/             # REST storage implementation
+│   ├── spicedb/              # Embedded SpiceDB integration
 │   └── storage/              # Storage backend
 ├── test/                      # Test suites
 │   └── e2e/                  # End-to-end tests
 ├── docs/                      # Documentation
+├── examples/                  # Example YAML files
 └── hack/                      # Development scripts
 ```
 
@@ -229,36 +256,69 @@ See [charts/rbac-apiserver/README.md](charts/rbac-apiserver/README.md) for compl
 
 ## API Reference
 
-### Relationship Resource (Multi-cluster RBAC)
+### PermissionBinding Resource
 
-The Relationship API manages authorization relationships based on the SpiceDB tuple model.
+The PermissionBinding API defines what permissions a user or group has on resources across clusters. These bindings are automatically synced to the embedded SpiceDB for authorization evaluation.
 
 ```yaml
 apiVersion: authorization.open-cluster-management.io/v1alpha1
-kind: Relationship
+kind: PermissionBinding
 metadata:
-  name: user2-cluster1-admin
+  name: alice-pod-viewer
 spec:
-  tuples:
-  - resource:
-      objectType: "resource"
-      objectId: "cluster/cluster1/namespace/_wildcard_"
-    relation: "admin"
-    subject:
-      object:
-        objectType: "user"
-        objectId: "user2"
+  subject:
+    kind: User
+    name: alice
+  permissions:
+    - role: viewer          # admin, editor, or viewer
+      resources:
+        - pods
+      groups:
+        - ""              # "" for core API group
+      namespaces:
+        - default
+      names:
+        - "*"             # wildcard for all resources
+      clusters:
+        - cluster1
 ```
 
-For detailed information about the Relationship API, see [docs/relationship-api.md](docs/relationship-api.md).
+### PermissionReview Resource (CSR-like)
+
+The PermissionReview API checks whether a user has permission to perform an action on a resource. Like Kubernetes CertificateSigningRequests, PermissionReviews are evaluated immediately and not persisted.
+
+```yaml
+apiVersion: authorization.open-cluster-management.io/v1alpha1
+kind: PermissionReview
+metadata:
+  name: check-alice-access
+spec:
+  group: ""
+  resource: pods
+  verb: get
+  cluster: cluster1
+  namespace: default
+  name: my-pod
+```
+
+For detailed API documentation, see [docs/authorization-api.md](docs/authorization-api.md).
+
+For detailed usage examples, see [EXAMPLES.md](EXAMPLES.md).
 
 ### Supported Operations
 
-- **Create**: `kubectl create -f relationship.yaml`
-- **Get**: `kubectl get relationship user2-cluster1-admin`
-- **List**: `kubectl get relationships`
-- **Update**: `kubectl edit relationship user2-cluster1-admin`
-- **Delete**: `kubectl delete relationship user2-cluster1-admin`
+**PermissionBinding**:
+
+- **Create**: `kubectl apply -f binding.yaml`
+- **Get**: `kubectl get permissionbinding alice-pod-viewer`
+- **List**: `kubectl get permissionbindings`
+- **Update**: `kubectl edit permissionbinding alice-pod-viewer`
+- **Delete**: `kubectl delete permissionbinding alice-pod-viewer`
+
+**PermissionReview** (CSR-like pattern):
+
+- **Create**: `kubectl create -f review.yaml --as=alice -o yaml` (evaluated immediately, not persisted)
+- **Note**: Get and List operations are not supported for PermissionReviews
 
 ## CI/CD
 
@@ -332,8 +392,24 @@ kubectl cluster-info
 # Verify APIServices are available
 kubectl get apiservices | grep open-cluster-management.io
 
+# Test the API with a simple PermissionBinding
+kubectl apply -f examples/01-user-viewer-binding.yaml
+
 # Check e2e test logs with verbose output
 ./_output/test/e2e.test -ginkgo.v -ginkgo.fail-fast
+```
+
+### PermissionReviews Not Working
+
+```bash
+# Ensure you have RBAC permissions to create PermissionReviews
+kubectl apply -f examples/01-permissionreviews-assign.yaml
+
+# Use kubectl create (not apply) with --as flag
+kubectl create -f examples/01-check-user-view-access.yaml --as=alice -o yaml
+
+# Check SpiceDB logs in the API server
+kubectl logs -n rbac-apiserver-system deployment/rbac-apiserver | grep -i spicedb
 ```
 
 ## License

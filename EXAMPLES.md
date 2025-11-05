@@ -77,10 +77,10 @@ kubectl get permissionbinding alice-pod-viewer -o yaml
 
 ### Step 3: Create a PermissionReview to Check Access
 
-Apply the example PermissionReview to check if alice can view a pod:
+Create the example PermissionReview to check if alice can view a pod (use `kubectl create`, not `apply`, since PermissionReviews are CSR-like and not persisted):
 
 ```bash
-kubectl apply -f examples/02-check-user-view-access.yaml
+kubectl create -f examples/01-check-user-view-access.yaml -o yaml
 ```
 
 This request checks if alice has permission to get (view) a pod named "my-pod" in the default namespace of cluster1.
@@ -88,16 +88,12 @@ This request checks if alice has permission to get (view) a pod named "my-pod" i
 <details>
 <summary>View the YAML definition</summary>
 
-See [examples/02-check-user-view-access.yaml](examples/02-check-user-view-access.yaml)
+See [examples/01-check-user-view-access.yaml](examples/01-check-user-view-access.yaml)
 </details>
 
 ### Step 4: View the Result
 
-```bash
-kubectl get permissionreview check-alice-pod-view -o yaml
-```
-
-The PermissionReview object will be created and processed by the API server. The status field will contain the evaluation results from SpiceDB:
+The PermissionReview is evaluated immediately and returns the result. The output from the `kubectl create` command above will show the status field with the evaluation results from SpiceDB:
 
 ```yaml
 status:
@@ -115,7 +111,7 @@ Since alice has viewer role and the wildcard matching is enabled, the status sho
 
 ```bash
 kubectl delete permissionbinding alice-pod-viewer
-kubectl delete permissionreview check-alice-pod-view
+# Note: PermissionReviews are not persisted, so no cleanup needed
 ```
 
 ## Example 2: Group Permissions
@@ -384,8 +380,8 @@ kubectl port-forward -n rbac-apiserver-system svc/rbac-apiserver 50051:50051
 
 ## Next Steps
 
-- Read the [Architecture Documentation](ARCHITECTURE.md) to understand how SpiceDB integration works
-- Review the [API Reference](API.md) for complete API specifications
+- Read the [Authorization API Documentation](docs/authorization-api.md) to understand the API implementation
+- Review the [README.md](README.md) for project overview and setup
 - Check out the [E2E Tests](test/e2e/) for more complex examples
 - Learn about [SpiceDB Schema](pkg/spicedb/bootstrap.yaml) used by the API server
 
