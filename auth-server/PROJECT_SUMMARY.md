@@ -65,7 +65,10 @@ Production-ready manifests including:
 
 ### 4. Examples and Testing
 
-- Sample PermissionBindings for users alice and bob
+- Sample PermissionBindings for users alice, bob, and charlie
+- Alice: viewer role for pods in default namespace on cluster1
+- Bob: admin role for pods/deployments/services in production/staging namespaces on cluster1 and cluster2
+- Charlie: admin role on cluster3 (demonstrates NoOpinion fallback to native RBAC)
 - Automated test script for verification
 - Quick start guide for immediate testing
 
@@ -127,10 +130,14 @@ sleep 30
 # 3. Create PermissionBindings on hub
 kubectl config use-context kind-hub
 kubectl apply -f examples/permissionbinding-alice.yaml
+kubectl apply -f examples/permissionbinding-bob.yaml
+kubectl apply -f examples/permissionbinding-charlie.yaml
 
 # 4. Test authorization on managed cluster
 kubectl config use-context kind-managed
 kubectl auth can-i get pods --as=alice -n default
+kubectl create namespace production
+kubectl auth can-i create deployments --as=bob -n production
 
 # 5. Watch logs
 kubectl logs -n auth-server-system deployment/auth-server -f
@@ -183,14 +190,19 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 ### Manual Testing
 
 ```bash
-# Create PermissionBinding on hub
+# Create PermissionBindings on hub
 kubectl config use-context kind-hub
 kubectl apply -f examples/permissionbinding-alice.yaml
+kubectl apply -f examples/permissionbinding-bob.yaml
 
-# Test on managed cluster
+# Test on managed cluster (alice - viewer role)
 kubectl config use-context kind-managed
-kubectl auth can-i get pods --as=alice
-kubectl auth can-i create pods --as=alice
+kubectl auth can-i get pods --as=alice -n default
+kubectl auth can-i create pods --as=alice -n default  # Should be denied
+
+# Test bob (admin role in production namespace)
+kubectl create namespace production
+kubectl auth can-i create deployments --as=bob -n production  # Should be allowed
 ```
 
 ### Observability
