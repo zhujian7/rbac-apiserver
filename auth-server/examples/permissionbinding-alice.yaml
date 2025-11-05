@@ -1,17 +1,18 @@
 apiVersion: authorization.open-cluster-management.io/v1alpha1
 kind: PermissionBinding
 metadata:
-  name: alice-admin-permissions
+  name: alice-pod-viewer
 spec:
   subject:
     kind: User
     name: alice
   permissions:
-  # Allow alice to admin pods, deployments, and services in default namespace
-  - resources: ["pods", "deployments", "services"]
-    groups: ["", "apps"]
+  # Allow alice to view pods in default namespace on cluster1
+  # This matches the example in ./examples/01-user-viewer-binding.yaml
+  - resources: ["pods"]
+    groups: [""]
     namespaces: ["default"]
     names: ["*"]
-    role: "admin"
-    clusters: ["managed-cluster"]
+    role: "viewer"
+    clusters: ["cluster1"]
 

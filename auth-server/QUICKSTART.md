@@ -62,8 +62,8 @@ kubectl get permissionbindings
 Expected output:
 ```
 NAME                       AGE
-alice-admin-permissions    10s
-bob-viewer-permissions     10s
+alice-pod-viewer           10s
+bob-multi-cluster-admin    10s
 ```
 
 ## Step 4: Test Authorization on Managed Cluster
@@ -79,13 +79,13 @@ Or test manually:
 ```bash
 kubectl config use-context kind-managed
 
-# Test as alice (should have admin permissions)
-kubectl auth can-i get pods --as=alice -n default
-kubectl auth can-i create deployments --as=alice -n default
+# Test as alice (should have viewer permissions for pods)
+kubectl auth can-i get pods --as=alice -n default  # Should be allowed
+kubectl auth can-i create deployments --as=alice -n default  # Should be denied (viewer role)
 
-# Test as bob (should have limited permissions)
-kubectl auth can-i get pods --as=bob -n default
-kubectl auth can-i create pods --as=bob -n default  # Should be denied
+# Test as bob (should have admin permissions on cluster1)
+kubectl auth can-i get pods --as=bob -n production  # Should be allowed
+kubectl auth can-i create deployments --as=bob -n production  # Should be allowed
 ```
 
 ## Step 5: Monitor Authorization Decisions
@@ -99,7 +99,7 @@ kubectl logs -n auth-server-system deployment/auth-server -f
 
 You should see logs like:
 ```
-I1027 10:00:00.000000       1 server.go:XX] Starting authorization webhook server for cluster managed-cluster on :8443
+I1027 10:00:00.000000       1 server.go:XX] Starting authorization webhook server for cluster cluster1 on :8443
 I1027 10:00:01.000000       1 server.go:XX] Authorization request: user=alice, resource=/pods, verb=get, namespace=default
 I1027 10:00:01.000000       1 server.go:XX] Creating PermissionReview on hub
 I1027 10:00:01.000000       1 server.go:XX] Authorization result for user alice: allowed=true
